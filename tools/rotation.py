@@ -2,7 +2,7 @@ import numpy
 import math
 
 def deg_to_radian(deg):
-    return deg * 3.14159265359 / 180
+    return deg * 3.14159265359 / 180.0
 
 def xrotate(a):
     return numpy.array([
@@ -25,9 +25,14 @@ def zrotate(c):
      [0, 0, 1]
     ])
 
-print(
-    numpy.matmul(
-        yrotate(deg_to_radian(45)),
-        xrotate(deg_to_radian(-26.6))
-    )
+mat = numpy.matmul(
+    yrotate(deg_to_radian(45)),
+    xrotate(deg_to_radian(-35.264389701728)),
 )
+
+# mat = xrotate(deg_to_radian(-35.264389701728))
+for x in range(3):
+    print("[", end="")
+    for y in range(3):
+        print("{}0, ".format(mat[x][y]), end="")
+    print("0.0],")
