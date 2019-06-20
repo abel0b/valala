@@ -6,6 +6,9 @@ extern crate image;
 use std::io::Cursor;
 use glium::{uniform, Surface};
 
+mod grid;
+use grid::Vertex;
+
 fn view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4]; 4] {
     let f = {
         let f = direction;
@@ -41,14 +44,6 @@ fn view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f3
 }
 
 fn main() {
-    #[derive(Copy, Clone)]
-    struct Vertex {
-        position: (f32, f32, f32),
-        tex_coords: (f32, f32),
-    }
-
-    glium::implement_vertex!(Vertex, position, tex_coords);
-
     let mut event_loop = glium::glutin::EventsLoop::new();
 
     let wb = glium::glutin::WindowBuilder::new();
@@ -58,27 +53,33 @@ fn main() {
 
     let mut closed = false;
 
-    let vertices:[Vertex; 6] = [
-         Vertex { position: (-0.5, -0.5, 0.0), tex_coords: (0.0, 0.0) },
-         Vertex { position: (-0.5, 0.5, 0.0), tex_coords: (0.0, 1.0) },
-         Vertex { position: (0.5, -0.5, 0.0), tex_coords: (0.333333333, 0.0) },
-         Vertex { position: (0.5, 0.5, 0.0), tex_coords: (0.333333333, 1.0) },
-         Vertex { position: (-0.5, 0.5, 1.0), tex_coords: (0.333333333, 1.0) },
-         Vertex { position: (0.5, 0.5, 1.0), tex_coords: (0.333333333, 1.0) },
-    ];
+    // let vertices:[Vertex; 6] = [
+    //      Vertex { position: (-0.5, -0.5, 0.0), tex_coords: (0.0, 0.0) },
+    //      Vertex { position: (-0.5, 0.5, 0.0), tex_coords: (0.0, 1.0) },
+    //      Vertex { position: (0.5, -0.5, 0.0), tex_coords: (0.333333333, 0.0) },
+    //      Vertex { position: (0.5, 0.5, 0.0), tex_coords: (0.333333333, 1.0) },
+    //      Vertex { position: (-0.5, 0.5, 1.0), tex_coords: (0.333333333, 1.0) },
+    //      Vertex { position: (0.5, 0.5, 1.0), tex_coords: (0.333333333, 1.0) },
+    // ];
+    //
+    //
+    // let indices:[u16;12] = [
+    //     0, 1, 2,
+    //     1, 2, 3,
+    //     1, 3, 4,
+    //     3, 4, 5,
+    // ];
 
-    let indices:[u16;12] = [
-        0, 1, 2,
-        1, 2, 3,
-        1, 3, 4,
-        3, 4, 5,
-    ];
-
-    let image = image::load(Cursor::new(&include_bytes!("../grass.png")[..]), image::PNG).unwrap().to_rgba();
+    let image = image::load(Cursor::new(&include_bytes!("../ressources/grass.png")[..]), image::PNG).unwrap().to_rgba();
     let image_dimensions = image.dimensions();
     let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
 
-    let texture = glium::texture::Texture2d::new(&display, image).unwrap();
+    let grass_texture = glium::texture::Texture2d::new(&display, image).unwrap();
+
+    let image = image::load(Cursor::new(&include_bytes!("../ressources/dirt.png")[..]), image::PNG).unwrap().to_rgba();
+    let image_dimensions = image.dimensions();
+    let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
+    let dirt_texture = glium::texture::Texture2d::new(&display, image).unwrap();
 
     while !closed {
         t = t + 0.0002;
@@ -87,9 +88,6 @@ fn main() {
         }
         let mut target = display.draw();
         target.clear_color(0.9, 0.9, 0.9, 1.0);
-
-        let vertex_buffer = glium::VertexBuffer::new(&display, &vertices).unwrap();
-        let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList, &indices).unwrap();
 
         let perspective = {
             let (width, height) = target.get_dimensions();
@@ -140,11 +138,36 @@ fn main() {
             }
         "#;
 
+
+        let vertex_shader_grid_src = r#"
+            #version 140
+
+            in vec3 position;
+            uniform mat4 model;
+            uniform mat4 perspective;
+            uniform mat4 view;
+
+            void main() {
+                mat4 modelview = view * model;
+                gl_Position =  perspective * modelview * vec4(position, 1.0);
+            }
+        "#;
+
+        let fragment_shader_grid_src = r#"
+            #version 140
+
+            out vec4 color;
+
+            void main() {
+                color = vec4(0.1, 0.1, 0.1, 1.0);
+            }
+        "#;
+
         // let view = view_matrix(&[0.70710678118, 0.0, -0.70710678118], &[0.40824829046, 0.81649658092, 0.40824829046], &[0.57735026919, -0.57735026919, 0.57735026919]);
         let view = view_matrix(&[0.0, 0.0, 0.0], &[0.0, 0.0, 0.1], &[0.0, 1.0, 0.0]);
 
         let uniforms = uniform! {
-            tex: &texture,
+            tex: &grass_texture,
             perspective: perspective,
             view: view,
             model: [
@@ -154,8 +177,26 @@ fn main() {
                 [0.0, 0.0, 10.0, 1.0f32]
             ]
         };
+
         let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
-        target.draw(&vertex_buffer, &index_buffer, &program, &uniforms, &Default::default()).unwrap();
+        let grid_program = glium::Program::from_source(&display, vertex_shader_grid_src, fragment_shader_grid_src, None).unwrap();
+        for x in -5..5 {
+            for y in -5..5 {
+                for z in -5..5 {
+                    let cell = grid::Hex::new(x,y,z);
+                    let vertices: [Vertex; 7] = cell.vertices();
+                    let indices: [u32; 18] = cell.indices();
+                    let border_indices: [u32;12] = cell.border_indices();
+
+                    let vertex_buffer = glium::VertexBuffer::new(&display, &vertices).unwrap();
+                    let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList, &indices).unwrap();
+                    let grid_index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::LinesList, &border_indices).unwrap();
+
+                    target.draw(&vertex_buffer, &index_buffer, &program, &uniforms, &Default::default()).unwrap();
+                    target.draw(&vertex_buffer, &grid_index_buffer, &grid_program, &uniforms, &Default::default()).unwrap();
+                }
+            }
+        }
         target.finish().unwrap();
 
         event_loop.poll_events(|e| {
