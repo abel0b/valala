@@ -1,7 +1,7 @@
 
 const CONVMAT: [f32; 4] = [1.73205080757, 1.73205080757/2.0, 0.0, 3.0/2.0];
 const CONVMAT_I: [f32; 4] = [1.73205080757/3.0, -1.0/3.0, 0.0, 2.0/3.0];
-const HEX_SIZE_X: f32 = 0.9;
+const HEX_SIZE_X: f32 = 1.0;
 const HEX_SIZE_Z: f32 = 1.0;
 
 #[derive(Copy, Clone)]
@@ -13,7 +13,7 @@ pub struct Vertex {
 glium::implement_vertex!(Vertex, position, tex_coords);
 
 pub struct Hex {
-    coordinates: (i32, i32, i32),
+    pub coordinates: (i32, i32, i32),
     pub vertices_buffer: glium::VertexBuffer<Vertex>,
     pub indices_buffer: glium::IndexBuffer<u32>,
     pub border_indices_buffer: glium::IndexBuffer<u32>,

@@ -46,7 +46,7 @@ fn main() {
     let mut event_loop = glium::glutin::EventsLoop::new();
 
     let wb = glium::glutin::WindowBuilder::new();
-    let cb = glium::glutin::ContextBuilder::new();
+    let cb = glium::glutin::ContextBuilder::new().with_depth_buffer(24);
     let display = glium::Display::new(wb, cb, &event_loop).unwrap();
 
     let mut closed = false;
@@ -66,14 +66,17 @@ fn main() {
 
     in vec3 position;
     in vec2 tex_coords;
+    uniform vec2 coordinates;
     uniform mat4 model;
     uniform mat4 perspective;
     uniform mat4 view;
 
     out vec2 v_tex_coords;
+    out vec2 v_coordinates;
 
     void main() {
         v_tex_coords = tex_coords;
+        v_coordinates = coordinates;
         mat4 modelview = view * model;
         gl_Position =  perspective * modelview * vec4(position, 1.0);
     }
@@ -84,11 +87,17 @@ fn main() {
 
     in vec2 v_tex_coords;
     uniform sampler2D tex;
+    in vec2 v_coordinates;
 
     out vec4 color;
 
     void main() {
-        color = texture(tex, v_tex_coords);
+        if (v_coordinates[0] == 0) {
+            color = texture(tex, v_tex_coords) - vec4(0.1,0.1,0.1,0.0);
+        }
+        else {
+            color = texture(tex, v_tex_coords);
+        }
     }
     "#;
 
@@ -117,22 +126,6 @@ fn main() {
     }
     "#;
 
-    let perspective: [[f32; 4]; 4] = {
-        let right: f32 = 10.0;
-        let left: f32 = -10.0;
-        let bottom: f32 = -10.0;
-        let top: f32 = 10.0;
-        let zfar: f32 = 10.0;
-        let znear: f32 = -10.0;
-
-        [
-            [2.0/(right-left)   ,    0.0,              0.0              ,   -(right+left)/(right-left)],
-            [         0.0         ,     2.0/(top-bottom) ,              0.0              ,   -(top+bottom)/(top-bottom)],
-            [         0.0         ,    0.0,  -2./(zfar-znear)    ,   -(zfar+znear)/(zfar-znear)],
-            [         0.0         ,    0.0, 0.0,   1.0f32],
-        ]
-    };
-
     let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
     let grid_program = glium::Program::from_source(&display, vertex_shader_grid_src, fragment_shader_grid_src, None).unwrap();
 
@@ -148,25 +141,64 @@ fn main() {
 
     let view = view_matrix(&[0.0, 0.0, 0.0], &[0.0, 0.0, -1.0], &[0.0, 1.0, 0.0]);
 
-    let uniforms = uniform! {
-        tex: &grass_texture,
-        view: view,
-        perspective: perspective,
-        model: [
-        [0.70710678118651090, -0.40824829065509560, -0.57735026905444890, 0.0],
-[0.00, 0.81649658073651470, -0.57735026946003950, 0.0],
-[0.70710678118658420, 0.40824829065505330, 0.5773502690543890, 0.0],
-        [0.0, 00.0, 0.0, 1.0f32]
-        ]
+    let params = glium::DrawParameters {
+        depth: glium::Depth {
+            test: glium::draw_parameters::DepthTest::IfLess,
+            write: true,
+            .. Default::default()
+        },
+        .. Default::default()
     };
 
     while !closed {
         let mut target = display.draw();
-        target.clear_color(0.9, 0.9, 0.9, 1.0);
+        target.clear_color_and_depth((0.9, 0.9, 0.9, 1.0), 1.0);
+        let perspective: [[f32; 4]; 4] = {
+            let (width, height) = target.get_dimensions();
+            let aspect_ratio = height as f32 / width as f32;
+            let right: f32 = 10.0;
+            let left: f32 = -10.0;
+            let bottom: f32 = -10.0;
+            let top: f32 = 10.0;
+            let zfar: f32 = 10.0;
+            let znear: f32 = -10.0;
+
+            [
+                [aspect_ratio*2.0/(right-left)   ,    0.0,              0.0              ,   -(right+left)/(right-left)*aspect_ratio],
+                [         0.0         ,     2.0/(top-bottom) ,              0.0              ,   -(top+bottom)/(top-bottom)],
+                [         0.0         ,    0.0,  -2./(zfar-znear)    ,   -(zfar+znear)/(zfar-znear)],
+                [         0.0         ,    0.0, 0.0,   1.0f32],
+            ]
+        };
+
+
+
+        let uniforms_grid = uniform! {
+            view: view,
+            perspective: perspective,
+            model: [
+                [0.70710678118651090, -0.40824829065509560, -0.57735026905444890, 0.0],
+                [0.00, 0.81649658073651470, -0.57735026946003950, 0.0],
+                [0.70710678118658420, 0.40824829065505330, 0.5773502690543890, 0.0],
+                [0.0, 0.01, 0.0, 1.0f32]
+            ]
+        };
 
         for i in 0..grid.len() {
-            target.draw(&grid[i].vertices_buffer, &grid[i].border_indices_buffer, &grid_program, &uniforms, &Default::default()).unwrap();
-            target.draw(&grid[i].vertices_buffer, &grid[i].indices_buffer, &program, &uniforms, &Default::default()).unwrap();
+            let uniforms_texture = uniform! {
+                tex: &grass_texture,
+                view: view,
+                coordinates: (grid[i].coordinates.0 as f32,  grid[i].coordinates.1 as f32),
+                perspective: perspective,
+                model: [
+                [0.70710678118651090, -0.40824829065509560, -0.57735026905444890, 0.0],
+                [0.00, 0.81649658073651470, -0.57735026946003950, 0.0],
+                [0.70710678118658420, 0.40824829065505330, 0.5773502690543890, 0.0],
+                [0.0, 0.0, 0.0, 1.0f32]
+                ]
+            };
+            target.draw(&grid[i].vertices_buffer, &grid[i].indices_buffer, &program, &uniforms_texture, &params).unwrap();
+            target.draw(&grid[i].vertices_buffer, &grid[i].border_indices_buffer, &grid_program, &uniforms_grid, &params).unwrap();
         }
 
         target.finish().unwrap();
