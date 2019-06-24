@@ -1,69 +1,41 @@
 #![macro_use]
 extern crate glium;
 extern crate image;
+extern crate cgmath;
 
 // use glium::{glutin, Surface};
 use std::io::Cursor;
 use glium::{uniform, Surface};
+use std::f32::consts::PI;
+
+use std::time::Duration;
+use std::time::Instant;
 
 mod grid;
-
-fn view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4]; 4] {
-    let f = {
-        let f = direction;
-        let len = f[0] * f[0] + f[1] * f[1] + f[2] * f[2];
-        let len = len.sqrt();
-        [f[0] / len, f[1] / len, f[2] / len]
-    };
-
-    let s = [up[1] * f[2] - up[2] * f[1],
-             up[2] * f[0] - up[0] * f[2],
-             up[0] * f[1] - up[1] * f[0]];
-
-    let s_norm = {
-        let len = s[0] * s[0] + s[1] * s[1] + s[2] * s[2];
-        let len = len.sqrt();
-        [s[0] / len, s[1] / len, s[2] / len]
-    };
-
-    let u = [f[1] * s_norm[2] - f[2] * s_norm[1],
-             f[2] * s_norm[0] - f[0] * s_norm[2],
-             f[0] * s_norm[1] - f[1] * s_norm[0]];
-
-    let p = [-position[0] * s_norm[0] - position[1] * s_norm[1] - position[2] * s_norm[2],
-             -position[0] * u[0] - position[1] * u[1] - position[2] * u[2],
-             -position[0] * f[0] - position[1] * f[1] - position[2] * f[2]];
-
-    [
-        [s_norm[0], u[0], f[0], 0.0],
-        [s_norm[1], u[1], f[1], 0.0],
-        [s_norm[2], u[2], f[2], 0.0],
-        [p[0], p[1], p[2], 1.0],
-    ]
-}
 
 fn main() {
     let mut event_loop = glium::glutin::EventsLoop::new();
 
     let wb = glium::glutin::WindowBuilder::new();
-    let cb = glium::glutin::ContextBuilder::new().with_depth_buffer(24);
+    let cb = glium::glutin::ContextBuilder::new().with_depth_buffer(24).with_multisampling(4);
     let display = glium::Display::new(wb, cb, &event_loop).unwrap();
 
     let mut closed = false;
 
-    let image = image::load(Cursor::new(&include_bytes!("../ressources/grass.png")[..]), image::PNG).unwrap().to_rgba();
+    let image = image::load(Cursor::new(&include_bytes!("../res/grass.png")[..]), image::PNG).unwrap().to_rgba();
     let image_dimensions = image.dimensions();
     let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
 
     let grass_texture = glium::texture::Texture2d::new(&display, image).unwrap();
 
-    let image = image::load(Cursor::new(&include_bytes!("../ressources/dirt.png")[..]), image::PNG).unwrap().to_rgba();
-    let image_dimensions = image.dimensions();
-    let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
-    let dirt_texture = glium::texture::Texture2d::new(&display, image).unwrap();
+    // let image = image::load(Cursor::new(&include_bytes!("../res/dirt.png")[..]), image::PNG).unwrap().to_rgba();
+    // let image_dimensions = image.dimensions();
+    // let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
+    // let dirt_texture = glium::texture::Texture2d::new(&display, image).unwrap();
     let vertex_shader_src = r#"
     #version 140
 
+    in uint id;
     in vec3 position;
     in vec2 tex_coords;
     uniform vec2 coordinates;
@@ -77,8 +49,7 @@ fn main() {
     void main() {
         v_tex_coords = tex_coords;
         v_coordinates = coordinates;
-        mat4 modelview = view * model;
-        gl_Position =  perspective * modelview * vec4(position, 1.0);
+        gl_Position =  perspective * view * model * vec4(position, 1.0);
     }
     "#;
 
@@ -91,13 +62,73 @@ fn main() {
 
     out vec4 color;
 
+    float modI(float a,float b) {
+        float m=a-floor((a+0.5)/b)*b;
+        return floor(m+0.5);
+    }
+
     void main() {
-        if (v_coordinates[0] == 0) {
+        if (modI(v_coordinates[0] - v_coordinates[1], 3) == 0.0) {
             color = texture(tex, v_tex_coords) - vec4(0.1,0.1,0.1,0.0);
+        }
+        else if  (modI(v_coordinates[0] - v_coordinates[1], 3) == 1.0) {
+            color = texture(tex, v_tex_coords) - vec4(0.05,0.05,0.05,0.0);
         }
         else {
             color = texture(tex, v_tex_coords);
         }
+    }
+    "#;
+    let select_vertex_shader_src = r#"
+    #version 140
+
+    in uint id;
+    in vec3 position;
+    uniform mat4 model;
+    uniform mat4 perspective;
+    uniform mat4 view;
+
+    void main() {
+        gl_Position =  perspective * view * model * vec4(position, 1.0);
+    }
+    "#;
+
+    let select_fragment_shader_src = r#"
+    #version 140
+
+    out vec4 f_id;
+
+    void main() {
+        f_id = vec4(0.65, 0.12, 0.17, 1.0);
+    }
+    "#;
+
+    let picking_vertex_shader_src = r#"
+    #version 140
+
+    in uint id;
+    in vec3 position;
+    uniform mat4 model;
+    uniform mat4 perspective;
+    uniform mat4 view;
+
+    flat out uint v_id;
+
+    void main() {
+        v_id = id;
+        gl_Position =  perspective * view * model * vec4(position, 1.0);
+    }
+    "#;
+
+    let picking_fragment_shader_src = r#"
+    #version 140
+
+    flat in uint v_id;
+
+    out uint f_id;
+
+    void main() {
+        f_id = v_id;
     }
     "#;
 
@@ -111,8 +142,7 @@ fn main() {
     uniform mat4 perspective;
 
     void main() {
-        mat4 modelview = view * model;
-        gl_Position =  perspective * modelview * vec4(position, 1.0);
+        gl_Position =  perspective * view * model * vec4(position, 1.0);
     }
     "#;
 
@@ -128,31 +158,64 @@ fn main() {
 
     let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
     let grid_program = glium::Program::from_source(&display, vertex_shader_grid_src, fragment_shader_grid_src, None).unwrap();
+    let picking_program = glium::Program::from_source(&display, picking_vertex_shader_src, picking_fragment_shader_src, None).unwrap();
+    let select_program = glium::Program::from_source(&display, select_vertex_shader_src, select_fragment_shader_src, None).unwrap();
 
     let mut grid: Vec<grid::Hex> = Vec::new();
-    let n = 5;
-    for x in -n..n {
-        for y in -n..n {
-            for z in -n..n {
-                grid.push(grid::Hex::new(&display, x,y,z));
-            }
-        }
-    }
+    grid.sort_by(|a, b| a.id.cmp(&b.id));
+    let n = 2;
+    let mut i = 1;
 
-    let view = view_matrix(&[0.0, 0.0, 0.0], &[0.0, 0.0, -1.0], &[0.0, 1.0, 0.0]);
+    grid.push(grid::Hex::new(1, &display,0, 0, 0));
+    // for x in -n..(n+1) {
+    //     for y in -n..(n+1) {
+    //         grid.push(grid::Hex::new(i, &display, x,y,-x-y));
+    //         i = i+1;
+    //     }
+    // }
+
+    let camera: cgmath::Matrix4<f32> = cgmath::Matrix4::look_at_dir(
+        cgmath::Point3 { x: 0.0, y: 0.0, z: 0.0 },
+        cgmath::Vector3 { x: 0.0, y: 0.0, z: 1.0 },
+        cgmath::Vector3 { x: 0.0, y: 1.0, z: 0.0 },
+    );
+    let view: [[f32; 4]; 4] = cgmath::conv::array4x4(camera);
 
     let params = glium::DrawParameters {
         depth: glium::Depth {
-            test: glium::draw_parameters::DepthTest::IfLess,
+            test: glium::DepthTest::IfLess,
             write: true,
             .. Default::default()
         },
         .. Default::default()
     };
 
+    let mut cursor_position: Option<(i32, i32)> = None;
+
+    let mut picking_attachments: Option<(glium::texture::UnsignedTexture2d, glium::framebuffer::DepthRenderBuffer)> = None;
+    let picking_pbo: glium::texture::pixel_buffer::PixelBuffer<u32>
+        = glium::texture::pixel_buffer::PixelBuffer::new_empty(&display, 1);
+
+     let mut accumulator = Duration::new(0, 0);
+     let mut previous_clock = Instant::now();
+
     while !closed {
+        let picked_object = {
+            let data = picking_pbo.read().map(|d| d[0]).unwrap_or(0);
+            if data != 0 {
+                grid.binary_search_by(|x| x.id.cmp(&data)).ok()
+            } else {
+                None
+            }
+        };
+
+        if let Some(index) = picked_object {
+            // println!("{:?}", grid[index].coordinates);
+        }
+
         let mut target = display.draw();
         target.clear_color_and_depth((0.9, 0.9, 0.9, 1.0), 1.0);
+
         let perspective: [[f32; 4]; 4] = {
             let (width, height) = target.get_dimensions();
             let aspect_ratio = height as f32 / width as f32;
@@ -160,59 +223,146 @@ fn main() {
             let left: f32 = -10.0;
             let bottom: f32 = -10.0;
             let top: f32 = 10.0;
-            let zfar: f32 = 10.0;
-            let znear: f32 = -10.0;
+            let far: f32 = 10.0;
+            let near: f32 = -10.0;
 
-            [
-                [aspect_ratio*2.0/(right-left)   ,    0.0,              0.0              ,   -(right+left)/(right-left)*aspect_ratio],
-                [         0.0         ,     2.0/(top-bottom) ,              0.0              ,   -(top+bottom)/(top-bottom)],
-                [         0.0         ,    0.0,  -2./(zfar-znear)    ,   -(zfar+znear)/(zfar-znear)],
-                [         0.0         ,    0.0, 0.0,   1.0f32],
-            ]
+            cgmath::conv::array4x4(
+                cgmath::Matrix4::from_nonuniform_scale(aspect_ratio, 1.0, 1.0) * cgmath::ortho(left, right, bottom, top, near, far)
+            )
         };
 
+        let model_mat = cgmath::Matrix4::from_angle_x(cgmath::Rad(-(1.0/2.0f32.sqrt()).atan())) * cgmath::Matrix4::from_angle_y(cgmath::Rad(PI/4.0));
+        // let inv_model_mat = cgmath::Matrix4::from_angle_y(cgmath::Rad(-PI/4.0)) * cgmath::Matrix4::from_angle_x(cgmath::Rad((1.0/2.0f32.sqrt()).atan()));
 
+        let model: [[f32; 4]; 4] = cgmath::conv::array4x4(model_mat);
 
-        let uniforms_grid = uniform! {
+        let uniforms = uniform! {
             view: view,
             perspective: perspective,
-            model: [
-                [0.70710678118651090, -0.40824829065509560, -0.57735026905444890, 0.0],
-                [0.00, 0.81649658073651470, -0.57735026946003950, 0.0],
-                [0.70710678118658420, 0.40824829065505330, 0.5773502690543890, 0.0],
-                [0.0, 0.01, 0.0, 1.0f32]
-            ]
+            model: model,
         };
+
+        if picking_attachments.is_none() || (
+            picking_attachments.as_ref().unwrap().0.get_width(),
+            picking_attachments.as_ref().unwrap().0.get_height().unwrap()
+        ) != target.get_dimensions() {
+            let (width, height) = target.get_dimensions();
+            picking_attachments = Some((
+                glium::texture::UnsignedTexture2d::empty_with_format(
+                    &display,
+                    glium::texture::UncompressedUintFormat::U32,
+                    glium::texture::MipmapsOption::NoMipmap,
+                    width, height,
+                ).unwrap(),
+                glium::framebuffer::DepthRenderBuffer::new(
+                    &display,
+                    glium::texture::DepthFormat::F32,
+                    width, height,
+                ).unwrap()
+            ))
+        }
 
         for i in 0..grid.len() {
             let uniforms_texture = uniform! {
                 tex: &grass_texture,
-                view: view,
                 coordinates: (grid[i].coordinates.0 as f32,  grid[i].coordinates.1 as f32),
+                view: view,
+                model: model,
                 perspective: perspective,
-                model: [
-                [0.70710678118651090, -0.40824829065509560, -0.57735026905444890, 0.0],
-                [0.00, 0.81649658073651470, -0.57735026946003950, 0.0],
-                [0.70710678118658420, 0.40824829065505330, 0.5773502690543890, 0.0],
-                [0.0, 0.0, 0.0, 1.0f32]
-                ]
             };
             target.draw(&grid[i].vertices_buffer, &grid[i].indices_buffer, &program, &uniforms_texture, &params).unwrap();
-            target.draw(&grid[i].vertices_buffer, &grid[i].border_indices_buffer, &grid_program, &uniforms_grid, &params).unwrap();
+            // target.draw(&grid[i].vertices_buffer, &grid[i].border_indices_buffer, &grid_program, &uniforms, &params).unwrap();
+        }
+
+        if let Some((ref picking_texture, ref depth_buffer)) = picking_attachments {
+            //clearing the picking texture
+            picking_texture.main_level().first_layer().into_image(None).unwrap().raw_clear_buffer([0u32, 0, 0, 0]);
+
+            let mut picking_target = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(&display, picking_texture, depth_buffer).unwrap();
+            picking_target.clear_depth(1.0);
+
+            for i in 0..grid.len() {
+                let uniforms_texture = uniform! {
+                    tex: &grass_texture,
+                    view: view,
+                    model: model,
+                    perspective: perspective,
+                };
+                picking_target.draw(&grid[i].vertices_buffer, &grid[i].indices_buffer, &picking_program, &uniforms_texture, &params).unwrap();
+            }
+        }
+
+        if let Some(index) = picked_object {
+
+            let center = grid[index].center;
+            let radius = 0.4;
+            let cursor_vertices = [
+                grid::Vertex { id: 10000, position: (center.0, 0.0, center.1), tex_coords: (0.0, 0.0) },
+                grid::Vertex { id: 10000, position: (center.0+(0.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(0.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+                grid::Vertex { id: 10000, position: (center.0+(1.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(1.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+                grid::Vertex { id: 10000, position: (center.0+(2.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(2.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+                grid::Vertex { id: 10000, position: (center.0+(3.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(3.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+                grid::Vertex { id: 10000, position: (center.0+(4.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(4.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+                grid::Vertex { id: 10000, position: (center.0+(5.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(5.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+                grid::Vertex { id: 10000, position: (center.0+(6.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(6.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+                grid::Vertex { id: 10000, position: (center.0+(7.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(7.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+                grid::Vertex { id: 10000, position: (center.0+(8.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(8.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+                grid::Vertex { id: 10000, position: (center.0+(9.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(9.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+                grid::Vertex { id: 10000, position: (center.0+(10.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(10.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+                grid::Vertex { id: 10000, position: (center.0+(11.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(11.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+            ];
+            let cursor_indices: [u32;36] = [0,1,2,0,2,3,0,3,4,0,4,5,0,5,6,0,6,7,0,7,8,0,8,9,0,9,10,0,10,11,0,11,12,0,12,1];
+
+            let cursor_vertices_buffer = glium::VertexBuffer::new(&display, &cursor_vertices).unwrap();
+            let cursor_indices_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList, &cursor_indices).unwrap();
+
+            target.draw(&cursor_vertices_buffer, &cursor_indices_buffer, &select_program, &uniforms, &params).unwrap();
+            // println!("{:?}", center);
+            // println!("{:?}", grid[index].coordinates);
         }
 
         target.finish().unwrap();
+
+        if let (Some(cursor), Some(&(ref picking_texture, _))) = (cursor_position, picking_attachments.as_ref()) {
+            // println!("{:?}", cursor);
+            let read_target = glium::Rect {
+                left: (cursor.0 - 1) as u32,
+                bottom: picking_texture.get_height().unwrap() - std::cmp::max(cursor.1 - 1, 0) as u32,
+                width: 1,
+                height: 1,
+            };
+
+            if read_target.left < picking_texture.get_width()
+            && read_target.bottom < picking_texture.get_height().unwrap() {
+                picking_texture.main_level()
+                    .first_layer()
+                    .into_image(None).unwrap()
+                    .raw_read_to_pixel_buffer(&read_target, &picking_pbo);
+            } else {
+                picking_pbo.write(&[0]);
+            }
+        } else {
+            picking_pbo.write(&[0]);
+        }
 
         event_loop.poll_events(|e| {
             match e {
                 glium::glutin::Event::WindowEvent { event, .. } => {
                     match event {
                         glium::glutin::WindowEvent::CloseRequested => closed = true,
+                        glium::glutin::WindowEvent::CursorMoved { position, .. } => {
+                            cursor_position = Some(position.into());
+                        },
                         _ => (),
                     }
                 },
                 _ => (),
             }
-        })
+        });
+
+        let now = Instant::now();
+        let _fps = 1000000000/(now - previous_clock).as_nanos();
+        println!("{}", _fps);
+        previous_clock = now;
     }
 }
