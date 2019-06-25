@@ -1,0 +1,11 @@
+stages:
+    - test
+
+lint:
+    stage: test
+    image: rust
+    before_script:
+        - rustup component add clippy
+        - cargo build -v
+    script:
+        - cargo clippy -v
