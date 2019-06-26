@@ -1,5 +1,5 @@
 use crate::hex::HexTile;
-use crate::vertex::Vertex;
+use crate::mesh::Vertex;
 use crate::identifier::Identifier;
 use std::collections::HashMap;
 use rand::Rng;
@@ -20,7 +20,6 @@ impl HexagonalMap {
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
         let mut border_indices = Vec::new();
-        let mut id: u32;
         let mut count = 1;
         let mut rng = rand::thread_rng();
         for q in -map_radius..=map_radius {
@@ -105,7 +104,7 @@ impl HexagonalMap {
         vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 5, (y as f32)*TILE_HEIGHT-TILE_HEIGHT), tex_coords: (0.333_333, 1.0) });
     }
 
-    pub fn tile(&self, id: u32) -> Option<&(i32, i32, i32)> {
-        self.tiles.get(&id)
-    }
+    // pub fn tile(&self, id: u32) -> Option<&(i32, i32, i32)> {
+    //     self.tiles.get(&id)
+    // }
 }

@@ -4,6 +4,7 @@ extern crate image;
 extern crate cgmath;
 extern crate clap;
 extern crate rand;
+extern crate tobj;
 
 mod map;
 mod hex;
@@ -11,7 +12,7 @@ mod game;
 mod camera;
 mod resource;
 mod state;
-mod vertex;
+mod mesh;
 mod picking;
 mod identifier;
 

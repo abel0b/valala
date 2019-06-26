@@ -16,6 +16,6 @@ void main() {
         color = texture(tex, v_tex_coords) - modI(v_coordinates[0] - v_coordinates[1], 3) * vec4(0.1,0.1,0.1,0.0);
     }
     else {
-        color = texture(tex, v_tex_coords) - vec4(0.3,0.3,0.3,0.0);
+        color = texture(tex, v_tex_coords) - vec4(0.5,0.5,0.5,0.0);
     }
 }
