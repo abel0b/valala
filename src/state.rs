@@ -1,5 +1,5 @@
 use crate::map;
-use glium::{glutin, Surface, uniform};
+use glium::{Surface, uniform};
 use core::f32::consts::PI;
 use crate::game::Game;
 use crate::vertex::Vertex;

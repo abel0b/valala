@@ -105,6 +105,7 @@ impl Game {
                         _ => (),
                     }
                 },
+                glium::glutin::Event::DeviceEvent { .. } => (),
                 _ => (),
             }
         });

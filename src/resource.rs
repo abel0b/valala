@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use image;
-use std::string::String;
 
 const RESOURCE_PACK_FOLDER: &str = "./res";
 
@@ -22,7 +21,7 @@ impl ImageResource {
     pub fn new(display: &glium::Display, filename: &str) -> ImageResource {
         let resource = match image::open(format!("{}/{}", RESOURCE_PACK_FOLDER, filename)) {
             Ok(resource) => resource.to_rgba(),
-            Err(_) => panic!("can not load image"),
+            _ => panic!("can not load image"),
         };
         let dimensions = resource.dimensions();
         let resource = glium::texture::RawImage2d::from_raw_rgba_reversed(&resource.into_raw(), dimensions);
