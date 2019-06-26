@@ -1,6 +1,5 @@
 #version 140
 
-in uint id;
 in vec3 position;
 uniform mat4 model;
 uniform mat4 perspective;

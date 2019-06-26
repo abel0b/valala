@@ -14,7 +14,7 @@ use crate::picking::Picker;
 
 const WINDOW_WIDTH: f64 = 1080.0;
 const WINDOW_HEIGHT: f64 = 720.0;
-const CLEAR_COLOR: (f32, f32, f32, f32) = (0.9, 0.9, 0.9, 1.0);
+const CLEAR_COLOR: (f32, f32, f32, f32) = (0.05, 0.05, 0.05, 1.0);
 
 struct CursorState {
     position: Option<(i32, i32)>,

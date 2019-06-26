@@ -2,7 +2,7 @@ use crate::map;
 use glium::{Surface, uniform};
 use core::f32::consts::PI;
 use crate::game::Game;
-use crate::vertex::Vertex;
+use crate::vertex::SimpleVertex;
 use crate::hex::HexTile;
 
 pub trait GameState {
@@ -20,7 +20,7 @@ pub struct World {
 impl World {
     pub fn new(display: &glium::Display) -> World {
         World {
-            map: map::HexagonalMap::new(display, 5),
+            map: map::HexagonalMap::new(display, 6),
             terrain_program: glium::Program::from_source(display, include_str!("./shader/terrain.vert"), include_str!("./shader/terrain.frag"), None).unwrap(),
             grid_program: glium::Program::from_source(display, include_str!("./shader/grid.vert"), include_str!("./shader/grid.frag"), None).unwrap(),
             path_program: glium::Program::from_source(display, include_str!("./shader/path.vert"), include_str!("./shader/path.frag"), None).unwrap(),
@@ -59,19 +59,19 @@ impl InWorld {
                 let center = HexTile::center(*q,*r);
                 let radius = 0.4;
                 let cursor_vertices = [
-                    Vertex { id: 10000, position: (center.0, 0.0, center.1), tex_coords: (0.0, 0.0) },
-                    Vertex { id: 10000, position: (center.0+(0.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(0.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
-                    Vertex { id: 10000, position: (center.0+(1.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(1.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
-                    Vertex { id: 10000, position: (center.0+(2.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(2.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
-                    Vertex { id: 10000, position: (center.0+(3.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(3.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
-                    Vertex { id: 10000, position: (center.0+(4.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(4.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
-                    Vertex { id: 10000, position: (center.0+(5.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(5.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
-                    Vertex { id: 10000, position: (center.0+(6.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(6.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
-                    Vertex { id: 10000, position: (center.0+(7.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(7.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
-                    Vertex { id: 10000, position: (center.0+(8.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(8.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
-                    Vertex { id: 10000, position: (center.0+(9.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(9.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
-                    Vertex { id: 10000, position: (center.0+(10.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(10.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
-                    Vertex { id: 10000, position: (center.0+(11.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(11.0*(2.0*PI/12.0)).sin()*radius), tex_coords: (0.0, 0.0) },
+                    SimpleVertex { position: (center.0, 0.0, center.1) },
+                    SimpleVertex { position: (center.0+(0.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(0.0*(2.0*PI/12.0)).sin()*radius) },
+                    SimpleVertex { position: (center.0+(1.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(1.0*(2.0*PI/12.0)).sin()*radius) },
+                    SimpleVertex { position: (center.0+(2.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(2.0*(2.0*PI/12.0)).sin()*radius) },
+                    SimpleVertex { position: (center.0+(3.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(3.0*(2.0*PI/12.0)).sin()*radius) },
+                    SimpleVertex { position: (center.0+(4.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(4.0*(2.0*PI/12.0)).sin()*radius) },
+                    SimpleVertex { position: (center.0+(5.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(5.0*(2.0*PI/12.0)).sin()*radius) },
+                    SimpleVertex { position: (center.0+(6.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(6.0*(2.0*PI/12.0)).sin()*radius) },
+                    SimpleVertex { position: (center.0+(7.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(7.0*(2.0*PI/12.0)).sin()*radius) },
+                    SimpleVertex { position: (center.0+(8.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(8.0*(2.0*PI/12.0)).sin()*radius) },
+                    SimpleVertex { position: (center.0+(9.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(9.0*(2.0*PI/12.0)).sin()*radius) },
+                    SimpleVertex { position: (center.0+(10.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(10.0*(2.0*PI/12.0)).sin()*radius) },
+                    SimpleVertex { position: (center.0+(11.0*(2.0*PI/12.0)).cos()*radius, 0.01, center.1+(11.0*(2.0*PI/12.0)).sin()*radius) },
                 ];
                 let cursor_indices: [u32;36] = [0,1,2,0,2,3,0,3,4,0,4,5,0,5,6,0,6,7,0,7,8,0,8,9,0,9,10,0,10,11,0,11,12,0,12,1];
 

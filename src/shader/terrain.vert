@@ -3,7 +3,7 @@
 in uint id;
 in vec3 position;
 in vec2 tex_coords;
-uniform vec2 coordinates;
+in vec2 coordinates;
 uniform mat4 model;
 uniform mat4 perspective;
 uniform mat4 view;

@@ -3,6 +3,8 @@ use crate::vertex::Vertex;
 use crate::identifier::Identifier;
 use std::collections::HashMap;
 
+const TILE_HEIGHT: f32 = 0.5;
+
 pub struct HexagonalMap {
     pub tiles: HashMap<u32, (i32,i32)>,
     pub vertices_buffer: glium::VertexBuffer<Vertex>,
@@ -26,47 +28,61 @@ impl HexagonalMap {
                 let center = HexTile::center(q, r);
                 id = Identifier::gen();
                 tiles.insert(id, (q, r));
-                vertices.push(Vertex { id, position: (center.0, 0.0, center.1), tex_coords: (0.5, 0.5) });
-                vertices.push(Vertex { id, position: HexTile::corner(center, 0, 0.0), tex_coords: (0.0, 0.5) });
-                vertices.push(Vertex { id, position: HexTile::corner(center, 1, 0.0), tex_coords: (0.333_333, 0.0) });
-                vertices.push(Vertex { id, position: HexTile::corner(center, 2, 0.0), tex_coords: (0.666_666, 0.0) });
-                vertices.push(Vertex { id, position: HexTile::corner(center, 3, 0.0), tex_coords: (1.0, 0.5) });
-                vertices.push(Vertex { id, position: HexTile::corner(center, 4, 0.0), tex_coords: (0.666_666, 1.0) });
-                vertices.push(Vertex { id, position: HexTile::corner(center, 5, 0.0), tex_coords: (0.333_333, 1.0) });
-                vertices.push(Vertex { id, position: HexTile::corner(center, 0, -2.0), tex_coords: (0.0, 0.5) });
-                vertices.push(Vertex { id, position: HexTile::corner(center, 1, -2.0), tex_coords: (0.333_333, 0.0) });
-                vertices.push(Vertex { id, position: HexTile::corner(center, 2, -2.0), tex_coords: (0.666_666, 0.0) });
-                vertices.push(Vertex { id, position: HexTile::corner(center, 3, -2.0), tex_coords: (1.0, 0.5) });
-                vertices.push(Vertex { id, position: HexTile::corner(center, 4, -2.0), tex_coords: (0.666_666, 1.0) });
-                vertices.push(Vertex { id, position: HexTile::corner(center, 5, -2.0), tex_coords: (0.333_333, 1.0) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: (center.0, 0.0, center.1), tex_coords: (0.5, 0.5) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 0, 0.0), tex_coords: (0.0, 0.5) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 1, 0.0), tex_coords: (0.333_333, 0.0) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 2, 0.0), tex_coords: (0.666_666, 0.0) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 3, 0.0), tex_coords: (1.0, 0.5) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 4, 0.0), tex_coords: (0.666_666, 1.0) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 5, 0.0), tex_coords: (0.333_333, 1.0) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 0, -TILE_HEIGHT), tex_coords: (0.0, 0.5) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 1, -TILE_HEIGHT), tex_coords: (0.333_333, 0.0) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 2, -TILE_HEIGHT), tex_coords: (0.666_666, 0.0) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 3, -TILE_HEIGHT), tex_coords: (1.0, 0.5) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 4, -TILE_HEIGHT), tex_coords: (0.666_666, 1.0) });
+                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 5, -TILE_HEIGHT), tex_coords: (0.333_333, 1.0) });
+
+                let offset = (count-1)*13;
 
                 indices.extend_from_slice(&[
-                    (count-1)*13, 1+(count-1)*13, 2+(count-1)*13,
-                    (count-1)*13, 2+(count-1)*13, 3+(count-1)*13,
-                    (count-1)*13, 3+(count-1)*13, 4+(count-1)*13,
-                    (count-1)*13, 4+(count-1)*13, 5+(count-1)*13,
-                    (count-1)*13, 5+(count-1)*13, 6+(count-1)*13,
-                    (count-1)*13, 6+(count-1)*13, 1+(count-1)*13,
+                    offset, 1+offset, 2+offset,
+                    offset, 2+offset, 3+offset,
+                    offset, 3+offset, 4+offset,
+                    offset, 4+offset, 5+offset,
+                    offset, 5+offset, 6+offset,
+                    offset, 6+offset, 1+offset,
+                    offset+1, offset+7, offset+8,
+                    offset+1, offset+2, offset+8,
+                    offset+2, offset+8, offset+9,
+                    offset+2, offset+3, offset+9,
+                    offset+3, offset+9, offset+10,
+                    offset+3, offset+4, offset+10,
+                    offset+4, offset+10, offset+11,
+                    offset+4, offset+5, offset+11,
+                    offset+5, offset+11, offset+12,
+                    offset+5, offset+6, offset+12,
+                    offset+6, offset+12, offset+7,
+                    offset+6, offset+1, offset+7,
                 ]);
 
                 border_indices.extend_from_slice(&[
-                    1+(count-1)*13, 2+(count-1)*13,
-                    2+(count-1)*13, 3+(count-1)*13,
-                    3+(count-1)*13, 4+(count-1)*13,
-                    4+(count-1)*13, 5+(count-1)*13,
-                    5+(count-1)*13, 6+(count-1)*13,
-                    6+(count-1)*13, 1+(count-1)*13,
-                    7+(count-1)*13, 8+(count-1)*13,
-                    8+(count-1)*13, 9+(count-1)*13,
-                    10+(count-1)*13, 11+(count-1)*13,
-                    11+(count-1)*13, 12+(count-1)*13,
-                    12+(count-1)*13, 7+(count-1)*13,
-                    1+(count-1)*13, 7+(count-1)*13,
-                    2+(count-1)*13, 8+(count-1)*13,
-                    3+(count-1)*13, 9+(count-1)*13,
-                    4+(count-1)*13, 10+(count-1)*13,
-                    5+(count-1)*13, 11+(count-1)*13,
-                    6+(count-1)*13, 12+(count-1)*13,
+                    1+offset, 2+offset,
+                    2+offset, 3+offset,
+                    3+offset, 4+offset,
+                    4+offset, 5+offset,
+                    5+offset, 6+offset,
+                    6+offset, 1+offset,
+                    7+offset, 8+offset,
+                    8+offset, 9+offset,
+                    10+offset, 11+offset,
+                    11+offset, 12+offset,
+                    12+offset, 7+offset,
+                    1+offset, 7+offset,
+                    2+offset, 8+offset,
+                    3+offset, 9+offset,
+                    4+offset, 10+offset,
+                    5+offset, 11+offset,
+                    6+offset, 12+offset,
                 ]);
                 count += 1;
             }

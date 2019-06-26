@@ -12,13 +12,5 @@ float modI(float a,float b) {
 }
 
 void main() {
-    if (modI(v_coordinates[0] - v_coordinates[1], 3) == 0.0) {
-        color = texture(tex, v_tex_coords) - vec4(0.1,0.1,0.1,0.0);
-    }
-    else if  (modI(v_coordinates[0] - v_coordinates[1], 3) == 1.0) {
-        color = texture(tex, v_tex_coords) - vec4(0.05,0.05,0.05,0.0);
-    }
-    else {
-        color = texture(tex, v_tex_coords);
-    }
+    color = texture(tex, v_tex_coords) - modI(v_coordinates[0] - v_coordinates[1], 3) * vec4(0.1,0.1,0.1,0.0);
 }
