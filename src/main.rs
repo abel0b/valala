@@ -2,10 +2,8 @@
 extern crate glium;
 extern crate image;
 extern crate cgmath;
-
-use std::error::Error;
-use std::result::Result;
-use std::boxed::Box;
+extern crate clap;
+extern crate rand;
 
 mod map;
 mod hex;
@@ -17,8 +15,15 @@ mod vertex;
 mod picking;
 mod identifier;
 
+use std::error::Error;
+use std::result::Result;
+use std::boxed::Box;
+
 fn main() -> Result<(), Box<dyn Error>> {
-    println!("Valala v{}", env!("CARGO_PKG_VERSION"));
+    clap::App::new("Valala")
+        .version(env!("CARGO_PKG_VERSION"))
+        .get_matches();
+
     let mut game = game::Game::new()?;
     game.start();
     Ok(())

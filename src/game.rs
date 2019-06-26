@@ -40,7 +40,7 @@ impl Game {
     pub fn new() -> Result<Game, Box<dyn Error>> {
         let event_loop = glium::glutin::EventsLoop::new();
 
-        let wb = glium::glutin::WindowBuilder::new().with_dimensions(LogicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
+        let wb = glium::glutin::WindowBuilder::new().with_dimensions(LogicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT)).with_title("Valala");
         let cb = glium::glutin::ContextBuilder::new().with_depth_buffer(24).with_multisampling(4);
         let display = glium::Display::new(wb, cb, &event_loop)?;
         let resource_pack =  ResourcePack::new(&display);

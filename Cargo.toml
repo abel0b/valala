@@ -8,4 +8,6 @@ edition = "2018"
 glium = "0.25.0"
 image = "0.21.2"
 cgmath = "0.17.0"
-imgui = "0.0.23"
+obj-rs = { version = "0.5", features = ["glium-support"] }
+clap = "2.33.0"
+rand = "0.6.5"

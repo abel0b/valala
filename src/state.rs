@@ -2,8 +2,12 @@ use crate::map;
 use glium::{Surface, uniform};
 use core::f32::consts::PI;
 use crate::game::Game;
-use crate::vertex::SimpleVertex;
 use crate::hex::HexTile;
+use std::fs::File;
+use std::io::BufReader;
+use obj;
+use crate::vertex;
+use crate::vertex::SimpleVertex;
 
 pub trait GameState {
     fn update(game: &mut Game, target: &mut glium::Frame, picked_object: Option<u32>);
@@ -15,16 +19,23 @@ pub struct World {
     grid_program: glium::Program,
     path_program: glium::Program,
     picking_program: glium::Program,
+    // character_vertices: glium::VertexBuffer<obj::Vertex>,
+    // character_indices: glium::IndexBuffer<u32>,
 }
 
 impl World {
     pub fn new(display: &glium::Display) -> World {
+        // let input = BufReader::new(File::open("./res/man.obj").unwrap());
+        // let obj: obj::Obj<obj::Vertex, u32> = obj::load_obj(input).unwrap();
+
         World {
             map: map::HexagonalMap::new(display, 6),
             terrain_program: glium::Program::from_source(display, include_str!("./shader/terrain.vert"), include_str!("./shader/terrain.frag"), None).unwrap(),
             grid_program: glium::Program::from_source(display, include_str!("./shader/grid.vert"), include_str!("./shader/grid.frag"), None).unwrap(),
             path_program: glium::Program::from_source(display, include_str!("./shader/path.vert"), include_str!("./shader/path.frag"), None).unwrap(),
             picking_program: glium::Program::from_source(display, include_str!("./shader/picking.vert"), include_str!("./shader/picking.frag"), None).unwrap(),
+            // character_vertices: glium::VertexBuffer::new(display, &obj.vertices).unwrap(),
+            // character_indices: glium::IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &obj.indices).unwrap()
         }
     }
 }
@@ -55,7 +66,7 @@ impl InWorld {
         }
 
         if let Some(object_id) = picked_object {
-            if let Some((q, r)) = game.world.map.tiles.get(&object_id) {
+            if let Some((q, r, _z)) = game.world.map.tiles.get(&object_id) {
                 let center = HexTile::center(*q,*r);
                 let radius = 0.4;
                 let cursor_vertices = [

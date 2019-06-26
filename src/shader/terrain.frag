@@ -2,7 +2,7 @@
 
 in vec2 v_tex_coords;
 uniform sampler2D tex;
-in vec2 v_coordinates;
+in vec3 v_coordinates;
 
 out vec4 color;
 
@@ -12,5 +12,10 @@ float modI(float a,float b) {
 }
 
 void main() {
-    color = texture(tex, v_tex_coords) - modI(v_coordinates[0] - v_coordinates[1], 3) * vec4(0.1,0.1,0.1,0.0);
+    if (v_coordinates[2] == 0.0) {
+        color = texture(tex, v_tex_coords) - modI(v_coordinates[0] - v_coordinates[1], 3) * vec4(0.1,0.1,0.1,0.0);
+    }
+    else {
+        color = texture(tex, v_tex_coords) - vec4(0.3,0.3,0.3,0.0);
+    }
 }

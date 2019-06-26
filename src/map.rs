@@ -2,11 +2,12 @@ use crate::hex::HexTile;
 use crate::vertex::Vertex;
 use crate::identifier::Identifier;
 use std::collections::HashMap;
-
+use rand::Rng;
 const TILE_HEIGHT: f32 = 0.5;
 
+
 pub struct HexagonalMap {
-    pub tiles: HashMap<u32, (i32,i32)>,
+    pub tiles: HashMap<u32, (i32,i32,i32)>,
     pub vertices_buffer: glium::VertexBuffer<Vertex>,
     pub indices_buffer: glium::IndexBuffer<u32>,
     pub border_indices_buffer: glium::IndexBuffer<u32>,
@@ -21,26 +22,16 @@ impl HexagonalMap {
         let mut border_indices = Vec::new();
         let mut id: u32;
         let mut count = 1;
+        let mut rng = rand::thread_rng();
         for q in -map_radius..=map_radius {
             let r1 = std::cmp::max(-map_radius, -q - map_radius);
             let r2 = std::cmp::min(map_radius, -q + map_radius);
             for r in r1..=r2 {
-                let center = HexTile::center(q, r);
-                id = Identifier::gen();
-                tiles.insert(id, (q, r));
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: (center.0, 0.0, center.1), tex_coords: (0.5, 0.5) });
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 0, 0.0), tex_coords: (0.0, 0.5) });
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 1, 0.0), tex_coords: (0.333_333, 0.0) });
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 2, 0.0), tex_coords: (0.666_666, 0.0) });
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 3, 0.0), tex_coords: (1.0, 0.5) });
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 4, 0.0), tex_coords: (0.666_666, 1.0) });
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 5, 0.0), tex_coords: (0.333_333, 1.0) });
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 0, -TILE_HEIGHT), tex_coords: (0.0, 0.5) });
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 1, -TILE_HEIGHT), tex_coords: (0.333_333, 0.0) });
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 2, -TILE_HEIGHT), tex_coords: (0.666_666, 0.0) });
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 3, -TILE_HEIGHT), tex_coords: (1.0, 0.5) });
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 4, -TILE_HEIGHT), tex_coords: (0.666_666, 1.0) });
-                vertices.push(Vertex { id, coordinates: (q as f32, r as f32), position: HexTile::corner(center, 5, -TILE_HEIGHT), tex_coords: (0.333_333, 1.0) });
+                Self::add_hex_tile(&mut vertices, &mut tiles, q, r, 0);
+
+                if rng.gen_range(0.0, 10.0) < 2.0 {
+                    Self::add_hex_tile(&mut vertices, &mut tiles, q, r, 1);
+                }
 
                 let offset = (count-1)*13;
 
@@ -93,5 +84,28 @@ impl HexagonalMap {
             indices_buffer: glium::IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &indices).unwrap(),
             border_indices_buffer: glium::IndexBuffer::new(display, glium::index::PrimitiveType::LinesList, &border_indices).unwrap(),
         }
+    }
+
+    fn add_hex_tile(vertices: &mut Vec<Vertex>, tiles: &mut  HashMap<u32, (i32,i32,i32)>, q: i32, r: i32, y: i32) {
+        let id = Identifier::gen();
+        tiles.insert(id, (q, r, y));
+        let center = HexTile::center(q, r);
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: (center.0, (y as f32)*TILE_HEIGHT, center.1), tex_coords: (0.5, 0.5) });
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 0, (y as f32)*TILE_HEIGHT), tex_coords: (0.0, 0.5) });
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 1, (y as f32)*TILE_HEIGHT), tex_coords: (0.333_333, 0.0) });
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 2, (y as f32)*TILE_HEIGHT), tex_coords: (0.666_666, 0.0) });
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 3, (y as f32)*TILE_HEIGHT), tex_coords: (1.0, 0.5) });
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 4, (y as f32)*TILE_HEIGHT), tex_coords: (0.666_666, 1.0) });
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 5, (y as f32)*TILE_HEIGHT), tex_coords: (0.333_333, 1.0) });
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 0, (y as f32)*TILE_HEIGHT-TILE_HEIGHT), tex_coords: (0.0, 0.5) });
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 1, (y as f32)*TILE_HEIGHT-TILE_HEIGHT), tex_coords: (0.333_333, 0.0) });
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 2, (y as f32)*TILE_HEIGHT-TILE_HEIGHT), tex_coords: (0.666_666, 0.0) });
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 3, (y as f32)*TILE_HEIGHT-TILE_HEIGHT), tex_coords: (1.0, 0.5) });
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 4, (y as f32)*TILE_HEIGHT-TILE_HEIGHT), tex_coords: (0.666_666, 1.0) });
+        vertices.push(Vertex { id, coordinates: (q as f32, r as f32, y as f32), position: HexTile::corner(center, 5, (y as f32)*TILE_HEIGHT-TILE_HEIGHT), tex_coords: (0.333_333, 1.0) });
+    }
+
+    pub fn tile(&self, id: u32) -> Option<&(i32, i32, i32)> {
+        self.tiles.get(&id)
     }
 }
