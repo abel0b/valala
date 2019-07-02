@@ -1,3 +1,5 @@
+use glium::Surface;
+
 pub struct Picker {
     picking_attachments: Option<(glium::texture::UnsignedTexture2d, glium::framebuffer::DepthRenderBuffer)>,
     picking_pbo: glium::texture::pixel_buffer::PixelBuffer<u32>,
@@ -11,31 +13,32 @@ impl Picker {
         }
     }
 
-    pub fn initialize(&mut self, display: &glium::Display, (width, height): (u32, u32)) {
-        if self.picking_attachments.is_none() || (
-            self.picking_attachments.as_ref().unwrap().0.get_width(),
-            self.picking_attachments.as_ref().unwrap().0.get_height().unwrap(),
-        ) != (width, height) {
-            self.picking_attachments = Some((
-                glium::texture::UnsignedTexture2d::empty_with_format(
-                    display,
-                    glium::texture::UncompressedUintFormat::U32,
-                    glium::texture::MipmapsOption::NoMipmap,
-                    width, height,
-                ).unwrap(),
-                glium::framebuffer::DepthRenderBuffer::new(
-                    display,
-                    glium::texture::DepthFormat::F32,
-                    width, height,
-                ).unwrap()
-            ))
-        }
+    pub fn initialize_picking_attachments(&mut self, display: &glium::Display, (width, height): (u32, u32)) {
+        self.picking_attachments = Some((
+            glium::texture::UnsignedTexture2d::empty_with_format(
+                display,
+                glium::texture::UncompressedUintFormat::U32,
+                glium::texture::MipmapsOption::NoMipmap,
+                width, height,
+            ).unwrap(),
+            glium::framebuffer::DepthRenderBuffer::new(
+                display,
+                glium::texture::DepthFormat::F32,
+                width, height,
+            ).unwrap()
+        ))
     }
 
-    pub fn get_picked_object(&self) -> Option<u32> {
+    pub fn get_picked_object(&self) -> Option<(u16, u16)> {
         match self.picking_pbo.read().map(|d| d[0]).unwrap() {
             0 => None,
-            identifier => Some(identifier),
+            picked_id => Some({
+                let bytes = picked_id.to_be_bytes();
+                (
+                    u16::from_be_bytes([bytes[0], bytes[1]]),
+                    u16::from_be_bytes([bytes[2], bytes[3]]),
+                )
+            }),
         }
     }
 
@@ -66,7 +69,9 @@ impl Picker {
     pub fn target(&self, display: &glium::Display) -> Option<glium::framebuffer::SimpleFrameBuffer> {
         if let Some((ref picking_texture, ref depth_buffer)) = self.picking_attachments {
             picking_texture.main_level().first_layer().into_image(None).unwrap().raw_clear_buffer([0u32, 0, 0, 0]);
-            Some(glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(display, picking_texture, depth_buffer).unwrap())
+            let mut target = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(display, picking_texture, depth_buffer).unwrap();
+            target.clear_depth(1.0);
+            Some(target)
         }
         else {
             None

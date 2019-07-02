@@ -8,13 +8,17 @@ extern crate tobj;
 
 mod map;
 mod hex;
-mod game;
+mod engine;
 mod camera;
 mod resource;
-mod state;
+mod gamestate;
 mod mesh;
 mod picking;
-mod identifier;
+mod ui;
+mod world;
+mod entity;
+mod scene;
+mod character;
 
 use std::error::Error;
 use std::result::Result;
@@ -25,7 +29,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         .version(env!("CARGO_PKG_VERSION"))
         .get_matches();
 
-    let mut game = game::Game::new()?;
-    game.start();
+    engine::Engine::new()?.run();
     Ok(())
 }
