@@ -45,4 +45,10 @@ impl HexTile {
         let angle = 2.0 * PI * (start_angle + (corner as f32)) / 6.0;
         (center.0 + HEX_SIZE_X * angle.cos(), y, center.1 + HEX_SIZE_Z * angle.sin())
     }
+
+    pub fn normal(corner: u32, y: f32) -> (f32, f32, f32) {
+        let start_angle = 0.0;
+        let angle = 2.0 * PI * (start_angle + (corner as f32)) / 6.0;
+        (HEX_SIZE_X * angle.cos(), y, HEX_SIZE_Z * angle.sin())
+    }
 }

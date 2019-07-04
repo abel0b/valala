@@ -101,23 +101,15 @@ impl Engine {
 
         for entity in self.world.scene.iter_entities() {
 
-            let uniforms = match &entity.texture_id {
-                Some(tex) => {
-                    glium::uniform! {
-                        tex: self.resource_pack.get_texture(&tex),
-                        view: self.world.camera.view,
-                        model: self.world.camera.model,
-                        perspective: self.world.camera.perspective,
-                    }
+            let uniforms = glium::uniform! {
+                tex: match &entity.texture_id {
+                    Some(tex) => self.resource_pack.get_texture(&tex),
+                    None => self.resource_pack.get_texture(&resource::TextureId::Terrain),
                 },
-                None => {
-                    glium::uniform! {
-                        tex: self.resource_pack.get_texture(&resource::TextureId::Terrain),
-                        view: self.world.camera.view,
-                        model: self.world.camera.model,
-                        perspective: self.world.camera.perspective,
-                    }
-                }
+                u_light: [-1.0, 0.4, 0.9f32],
+                view: self.world.camera.view,
+                model: self.world.camera.model,
+                perspective: self.world.camera.perspective,
             };
 
             let params = glium::DrawParameters {
@@ -131,7 +123,12 @@ impl Engine {
 
             if entity.visible {
                 if let Some(triangles) = entity.triangles.as_ref() {
-                    target.draw(&entity.vertices, triangles, self.resource_pack.get_shader(&resource::ShaderId::Terrain), &uniforms, &params).unwrap();
+                    match entity.normals.as_ref() {
+                        Some(normals) => {
+                            target.draw((&entity.vertices, normals), triangles, self.resource_pack.get_shader(&resource::ShaderId::Terrain), &uniforms, &params).unwrap();
+                        },
+                        None => {}
+                    };
                     if entity.pickable {
                         if let Some(picking_target) = picking_target_opt.as_mut() {
                             picking_target.draw(&entity.vertices, triangles, self.resource_pack.get_shader(&resource::ShaderId::Picking), &uniforms, &params).unwrap();
@@ -139,15 +136,11 @@ impl Engine {
                     }
                 }
                 if let Some(lines) = entity.lines.as_ref() {
-                    target.draw(&entity.vertices, lines, self.resource_pack.get_shader(&resource::ShaderId::Terrain), &uniforms, &params).unwrap();
-                    if entity.pickable {
-                        if let Some(picking_target) = picking_target_opt.as_mut() {
-                            picking_target.draw(&entity.vertices, lines, self.resource_pack.get_shader(&resource::ShaderId::Picking), &uniforms, &params).unwrap();
-                        }
-                    }
+                    target.draw(&entity.vertices, lines, self.resource_pack.get_shader(&resource::ShaderId::Line), &uniforms, &params).unwrap();
                 }
+
                 if let Some(mesh_id) = entity.mesh_id.as_ref() {
-                    target.draw(&self.resource_pack.get_mesh(mesh_id).vertices, &self.resource_pack.get_mesh(mesh_id).indices, self.resource_pack.get_shader(&resource::ShaderId::Character), &uniforms, &params).unwrap();
+                    target.draw((&self.resource_pack.get_mesh(mesh_id).vertices, &self.resource_pack.get_mesh(mesh_id).normals), &self.resource_pack.get_mesh(mesh_id).indices, self.resource_pack.get_shader(&resource::ShaderId::Character), &uniforms, &params).unwrap();
                 }
             }
         }

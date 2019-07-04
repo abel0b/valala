@@ -1,5 +1,5 @@
 use glium::{VertexBuffer, IndexBuffer};
-use crate::mesh::Vertex;
+use crate::mesh::{Vertex, Normal};
 use std::collections::HashMap;
 use crate::scene::Scene;
 use crate::resource::{MeshId, TextureId};
@@ -9,18 +9,22 @@ pub type EntityId = u16;
 pub struct Entity {
     pub id: EntityId,
     pub vertices: VertexBuffer<Vertex>,
+    pub normals:  Option<VertexBuffer<Normal>>,
     pub triangles: Option<IndexBuffer<u32>>,
     pub lines: Option<IndexBuffer<u32>>,
     pub visible: bool,
     pub pickable: bool,
     pub mesh_id: Option<MeshId>,
     pub texture_id: Option<TextureId>,
+    // pub line_shader: ShaderId,
+    // pub triangle_shader: ShaderId,
 }
 
 pub struct EntityFactory {
     entity_id: u16,
     group_id: u16,
     vertices: Vec<Vertex>,
+    normals: Option<Vec<Normal>>,
     triangles: Option<Vec<u32>>,
     lines: Option<Vec<u32>>,
     visible: bool,
@@ -37,6 +41,7 @@ impl EntityFactory {
             vertices: Vec::new(),
             triangles: None,
             lines: None,
+            normals: None,
             visible: false,
             pickable: false,
             mesh_id: None,
@@ -61,6 +66,7 @@ impl EntityFactory {
         self
     }
 
+
     pub fn group(mut self) -> EntityFactory {
         self.group_id = self.group_id.checked_add(1).unwrap();
         self
@@ -78,6 +84,19 @@ impl EntityFactory {
             },
             None => {
                 self.triangles = Some(vec![a, b, c]);
+            },
+        };
+        self
+    }
+
+    pub fn normal(mut self, (x, y, z): (f32, f32, f32)) -> EntityFactory {
+        let normal = Normal { normal: (x, y, z) };
+        match self.normals.as_mut() {
+            Some(normals) => {
+                normals.push(normal);
+            },
+            None => {
+                self.normals = Some(vec![normal]);
             },
         };
         self
@@ -116,6 +135,10 @@ impl EntityFactory {
             texture_id: self.texture_id,
             mesh_id: self.mesh_id,
             vertices: glium::VertexBuffer::new(display, &self.vertices).unwrap(),
+            normals: match self.normals {
+                Some(normals) => Some(glium::VertexBuffer::new(display, &normals).unwrap()),
+                None => None,
+            },
             triangles: match self.triangles {
                 Some(triangles) => Some(glium::IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &triangles).unwrap()),
                 None => None,
