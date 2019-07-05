@@ -7,16 +7,17 @@ use glium::glutin::dpi::LogicalSize;
 use std::time::Instant;
 use glium::{uniform,Surface};
 use std::collections::HashMap;
+use ron;
+use std::fs::File;
 
-use crate::gamestate;
+use crate::gamestate::{GameState, Action};
+use crate::lobby::Lobby;
 use crate::picking::Picker;
 use crate::ui;
 use crate::world;
 use crate::resource;
 use crate::mesh;
-
-const WINDOW_WIDTH: f64 = 1080.0;
-const WINDOW_HEIGHT: f64 = 720.0;
+use crate::settings::Settings;
 
 const CLEAR_COLOR: (f32, f32, f32, f32) = (0.05, 0.05, 0.05, 1.0);
 
@@ -30,27 +31,35 @@ pub struct Engine {
     pub picker: Picker,
     pub resource_pack: resource::ResourcePack,
     cursor_state: CursorState,
+    pub states: Vec<Box<dyn GameState>>,
     pub world: world::World,
-    pub lobby: gamestate::Lobby,
     pub ui: ui::Ui,
-}
-
-#[derive(Eq, PartialEq)]
-enum Action {
-    Continue,
-    Close,
+    pub settings: Settings,
 }
 
 impl Engine {
     pub fn new() -> Result<Engine, Box<dyn Error>> {
         let event_loop = glium::glutin::EventsLoop::new();
+        let f = File::open("settings.ron").expect("Failed opening file");
+        let settings: Settings = match ron::de::from_reader(f) {
+            Ok(x) => x,
+            Err(e) => {
+                println!("Failed to load settings: {}", e);
+                std::process::exit(1);
+            }
+        };
 
-        let wb = glium::glutin::WindowBuilder::new().with_dimensions(LogicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT)).with_title("Valala");
+        println!("{:?}", settings);
+
+        let wb = glium::glutin::WindowBuilder::new().with_dimensions(LogicalSize::new(settings.graphics.window_width as f64, settings.graphics.window_height as f64)).with_title("Valala");
         let cb = glium::glutin::ContextBuilder::new().with_depth_buffer(24).with_multisampling(4);
         let mut display = glium::Display::new(wb, cb, &event_loop)?;
         let resource_pack =  resource::ResourcePack::new(&display);
         let world = world::World::new(&display);
-        let lobby = gamestate::Lobby::new();
+        let lobby = Lobby::new();
+        let lobby: Box<dyn GameState> = Box::new(lobby);
+        lobby.enter();
+        let states = vec![lobby];
         let picker = Picker::new(&display);
         let ui = ui::Ui::new(&mut display);
 
@@ -60,11 +69,12 @@ impl Engine {
                 display,
                 resource_pack,
                 picker,
+                settings,
                 cursor_state: CursorState {
                     position: None,
                 },
                 world,
-                lobby,
+                states,
                 ui,
             }
         )
@@ -74,33 +84,49 @@ impl Engine {
         let mut action = Action::Continue;
         let mut previous_clock = Instant::now();
 
-        self.picker.initialize_picking_attachments(&self.display, (WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32));
+        self.picker.initialize_picking_attachments(&self.display, (self.settings.graphics.window_width, self.settings.graphics.window_height));
 
-        while action == Action::Continue {
-            action = self.update();
-
-            let now = Instant::now();
-            let _fps = 1_000_000_000/(now - previous_clock).as_nanos();
-            // println!("{}", _fps);
-            previous_clock = now;
+        loop {
+            match self.update() {
+                Action::Continue => {
+                    let now = Instant::now();
+                    let _fps = 1_000_000_000/(now - previous_clock).as_nanos();
+                    // println!("{}", _fps);
+                    previous_clock = now;
+                },
+                Action::Push(gamestate) => {
+                    if let Some(prevstate) = self.states.last() {
+                        prevstate.pause();
+                    }
+                    self.states.push(gamestate);
+                },
+                Action::Pop => {
+                    self.states.pop().unwrap().leave();
+                    if let Some(gamestate) = self.states.last() {
+                        gamestate.resume();
+                    }
+                },
+                Action::Quit => {
+                    break;
+                },
+            }
         }
     }
 
     fn update(&mut self) -> Action {
         let mut target = self.display.draw();
 
-        let mut action = Action::Continue;
-
-        gamestate::GameState::update(&self.lobby, &mut self.world);
+        let mut action = match self.states.last() {
+            Some(gamestate) => gamestate.update(&mut self.world),
+            None => Action::Quit,
+        };
 
         target.clear_color_and_depth(CLEAR_COLOR, 1.0);
         let picked_object = self.picker.get_picked_object();
 
         let mut picking_target_opt = self.picker.target(&self.display);
 
-
         for entity in self.world.scene.iter_entities() {
-
             let uniforms = glium::uniform! {
                 tex: match &entity.texture_id {
                     Some(tex) => self.resource_pack.get_texture(&tex),
@@ -156,7 +182,7 @@ impl Engine {
             match e {
                 glium::glutin::Event::WindowEvent { event, .. } => {
                     match event {
-                        glium::glutin::WindowEvent::CloseRequested => action = Action::Close,
+                        glium::glutin::WindowEvent::CloseRequested => action = Action::Quit,
                         glium::glutin::WindowEvent::Resized(glium::glutin::dpi::LogicalSize{width, height}) => {
                             picker.initialize_picking_attachments(display, (width as u32, height as u32));
                             camera.scale((height/width) as f32);

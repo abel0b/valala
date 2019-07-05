@@ -5,6 +5,8 @@ extern crate cgmath;
 extern crate clap;
 extern crate rand;
 extern crate tobj;
+extern crate ron;
+extern crate serde;
 
 mod map;
 mod hex;
@@ -19,6 +21,8 @@ mod world;
 mod entity;
 mod scene;
 mod character;
+mod settings;
+mod lobby;
 
 use std::error::Error;
 use std::result::Result;
