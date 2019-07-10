@@ -1,22 +1,29 @@
 use crate::hex::HexTile;
 use rand::Rng;
-use crate::entity::{EntityId, EntityFactory};
-use crate::scene::Scene;
+use valala_engine::{
+    entity::{EntityId, EntityFactory},
+    scene::Scene,
+    resource::MeshId,
+};
 use crate::character::Character;
-use crate::resource::MeshId;
 
 const TILE_HEIGHT: f32 = 0.5;
 
+#[derive(Default)]
 pub struct Map {
     // pub tiles: HashMap<u32, (i32,i32,i32)>,
     map_entity: EntityId,
-    player_entity: EntityId,
-    player: Character,
+    // player_entity: EntityId,
+    // player: Character,
 }
 
 impl Map {
-    pub fn new_hexagonal(scene: &mut Scene, display: &glium::Display, map_radius: i32) -> Map {
-        let mut map_factory = EntityFactory::new(scene).visible().pickable();
+    pub fn new() -> Map {
+        Default::default()
+    }
+
+    pub fn new_hexagonal(scene: &mut Scene, map_radius: i32) -> Map {
+        let mut map_factory = EntityFactory::new(16).visible().pickable();
         let mut rng = rand::thread_rng();
 
         let mut tile_number = 0;
@@ -34,13 +41,13 @@ impl Map {
             }
         }
 
-        let map_entity = map_factory.build(display);
-        let player_entity = EntityFactory::new(scene).visible().pickable().mesh(MeshId::Character).build(display);
+        let map_entity = map_factory.build();
+        // let player_entity = EntityFactory::new(16).visible().pickable().mesh(MeshId::Character).build();
 
         Map {
             map_entity: scene.add_entity(map_entity),
-            player_entity: scene.add_entity(player_entity),
-            player: Character::new(scene, 500, 10, "Nargan".to_string()),
+            // player_entity: scene.add_entity(player_entity),
+            // player: Character::new(scene, 500, 10, "Nargan".to_string()),
         }
     }
 

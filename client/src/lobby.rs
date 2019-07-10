@@ -1,18 +1,17 @@
-use crate::gamestate::{GameState, Action};
-use crate::world::World;
+use valala_engine::prelude::{Scene, GameState, Action, Context};
+use crate::map::Map;
 
-pub struct Lobby;
-
-impl Lobby {
-    pub fn new() -> Lobby {
-        Lobby {
-
-        }
-    }
+#[derive(Default)]
+pub struct Lobby {
+    map: Map,
 }
 
 impl GameState for Lobby {
-    fn update(&self, world: &mut World) -> Action {
+    fn enter(&mut self, ctx: &Context, scene: &mut Scene) {
+        self.map = Map::new_hexagonal(scene, 5)
+    }
+
+    fn frame(&mut self, ctx: &Context, scene: &mut Scene) -> Action {
         // let params = glium::DrawParameters {
         //     depth: glium::Depth {
         //         test: glium::DepthTest::IfLess,

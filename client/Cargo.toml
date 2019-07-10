@@ -1,0 +1,10 @@
+[package]
+name = "valala-client"
+version = "0.1.0"
+authors = ["Abel <abelcd@protonmail.com>"]
+edition = "2018"
+
+[dependencies]
+clap = "2.33.0"
+rand = "0.6.5"
+valala-engine = { path = "../engine" }

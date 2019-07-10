@@ -1,18 +1,6 @@
-[package]
-name = "valala"
-version = "0.1.0"
-authors = ["Abel <abelcd@protonmail.com>"]
-edition = "2018"
+[workspace]
 
-[dependencies]
-glium = "0.25.0"
-image = "0.21.2"
-cgmath = "0.17.0"
-clap = "2.33.0"
-rand = "0.6.5"
-tobj = "0.1.7"
-serde = { version = "1.0.94", features = ["derive"] }
-ron = "0.5.1"
-
-[build-dependencies]
-fs_extra = "1.1.0"
+members = [
+    "client",
+    "engine",
+]

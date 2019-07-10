@@ -9,7 +9,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f32) -> Camera {
+    pub fn isometric(aspect_ratio: f32) -> Camera {
         Camera {
             aspect_ratio,
             view: Self::compute_view(),

@@ -1,23 +1,22 @@
-use glium::{VertexBuffer, IndexBuffer};
-use crate::mesh::{Vertex, Normal};
-use std::collections::HashMap;
-use crate::scene::Scene;
-use crate::resource::{MeshId, TextureId};
+use crate::{
+    mesh::{Vertex, Normal},
+    scene::Scene,
+    resource::{MeshId, TextureId, ShaderId},
+};
 
 pub type EntityId = u16;
 
 pub struct Entity {
     pub id: EntityId,
-    pub vertices: VertexBuffer<Vertex>,
-    pub normals:  Option<VertexBuffer<Normal>>,
-    pub triangles: Option<IndexBuffer<u32>>,
-    pub lines: Option<IndexBuffer<u32>>,
+    pub vertices: Vec<Vertex>,
+    pub normals:  Option<Vec<Normal>>,
+    pub triangles: Option<Vec<u32>>,
+    pub lines: Option<Vec<u32>>,
     pub visible: bool,
     pub pickable: bool,
     pub mesh_id: Option<MeshId>,
     pub texture_id: Option<TextureId>,
-    // pub line_shader: ShaderId,
-    // pub triangle_shader: ShaderId,
+    pub shader_id: Option<ShaderId>,
 }
 
 pub struct EntityFactory {
@@ -29,14 +28,15 @@ pub struct EntityFactory {
     lines: Option<Vec<u32>>,
     visible: bool,
     pickable: bool,
-    pub mesh_id: Option<MeshId>,
+    mesh_id: Option<MeshId>,
     texture_id: Option<TextureId>,
+    shader_id: Option<ShaderId>,
 }
 
 impl EntityFactory {
-    pub fn new(scene: &mut Scene) -> EntityFactory {
+    pub fn new(id: u16) -> EntityFactory {
         EntityFactory {
-            entity_id: scene.generate_id(),
+            entity_id: id,
             group_id: 1,
             vertices: Vec::new(),
             triangles: None,
@@ -46,8 +46,15 @@ impl EntityFactory {
             pickable: false,
             mesh_id: None,
             texture_id: None,
+            shader_id: None,
         }
     }
+
+    pub fn shader(mut self, shader: ShaderId) -> EntityFactory {
+        self.shader_id = Some(shader);
+        self
+    }
+
 
     pub fn vertex(mut self, position: (f32, f32, f32), tex_coords: (f32, f32), data: (f32, f32, f32)) -> EntityFactory {
         let entity_id = self.entity_id.to_be_bytes();
@@ -129,26 +136,18 @@ impl EntityFactory {
         self
     }
 
-    pub fn build(self, display: &glium::Display) -> Entity {
+    pub fn build(self) -> Entity {
         Entity {
             id: self.entity_id,
             texture_id: self.texture_id,
             mesh_id: self.mesh_id,
-            vertices: glium::VertexBuffer::new(display, &self.vertices).unwrap(),
-            normals: match self.normals {
-                Some(normals) => Some(glium::VertexBuffer::new(display, &normals).unwrap()),
-                None => None,
-            },
-            triangles: match self.triangles {
-                Some(triangles) => Some(glium::IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &triangles).unwrap()),
-                None => None,
-            },
-            lines: match self.lines {
-                Some(lines) => Some(glium::IndexBuffer::new(display, glium::index::PrimitiveType::LinesList, &lines).unwrap()),
-                None => None,
-            },
+            vertices:self.vertices,
+            normals: self.normals,
+            triangles: self.triangles,
+            lines: self.lines,
             visible: self.visible,
             pickable: self.pickable,
+            shader_id: self.shader_id,
         }
     }
 }

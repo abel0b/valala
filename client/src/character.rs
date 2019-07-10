@@ -1,7 +1,8 @@
 use std::string::String;
-use crate::entity::EntityId;
-use crate::scene::Scene;
+use valala_engine::entity::EntityId;
+use valala_engine::scene::Scene;
 
+#[derive(Default)]
 pub struct Character {
     id: EntityId,
     health: u16,

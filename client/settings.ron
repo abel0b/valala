@@ -1,0 +1,10 @@
+Settings(
+    graphics: (
+        window_width: 1280,
+        window_height: 720,
+    ),
+    server: (
+        ip: "127.0.0.1",
+        port: 1414,
+    ),
+)
