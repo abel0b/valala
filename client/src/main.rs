@@ -1,8 +1,7 @@
-mod map;
 mod hex;
-mod character;
+mod data;
+mod view;
 mod lobby;
-mod context;
 
 use std::error::Error;
 use std::result::Result;
@@ -11,6 +10,8 @@ use clap::App;
 use valala_engine::prelude::{
     Engine,
     Settings,
+    ResourcePack,
+    Context,
 };
 
 use crate::{
@@ -22,12 +23,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         .version(env!("CARGO_PKG_VERSION"))
         .get_matches();
 
-    let mut engine = Engine::new(
-        context::build()
-    )?;
-    let lobby: Lobby = Default::default();
+    let mut engine = Engine::new({
+        let settings = Settings::from_file("settings.ron");
+        let resource_pack = ResourcePack::new();
 
-    engine.run(Box::new(lobby));
+        Context::new(settings, resource_pack)
+    })?;
+
+    engine.run(Box::new(Lobby));
 
     Ok(())
 }

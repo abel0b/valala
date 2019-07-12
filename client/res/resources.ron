@@ -1,0 +1,16 @@
+(
+    textures: [
+        (
+            name: "terrain",
+            path: "res/textures/terrain.png",
+        ),
+        (
+            name: "grass",
+            path: "res/textures/grass.png",
+        ),
+        (
+            name: "dirt",
+            path: "res/textures/dirt.png",
+        ),
+    ],
+)

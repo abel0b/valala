@@ -9,8 +9,9 @@ use crate::{
     ui,
     scene::Scene,
     context::Context,
-    resource::ShaderId,
+    resource::{ShaderId, TextureId},
     shader::Shader,
+    texture::Texture
 };
 
 pub struct Engine {
@@ -40,8 +41,16 @@ impl Engine {
             ShaderId("default"),
             Shader::from_source(
                 &self.context.backend,
-                include_str!("shaders/default.vert"),
-                include_str!("shaders/default.frag"),
+                include_str!("../res/shaders/default.vert"),
+                include_str!("../res/shaders/default.frag"),
+            )
+        );
+
+        self.context.resource_pack.register_texture(
+            TextureId("default"),
+            Texture::from_raw(
+                &self.context.backend,
+                include_bytes!("../res/textures/default.png"),
             )
         );
 
@@ -94,7 +103,7 @@ impl Engine {
                     match event {
                         glium::glutin::WindowEvent::CloseRequested => action = Action::Quit,
                         glium::glutin::WindowEvent::Resized(glium::glutin::dpi::LogicalSize{width, height}) => {
-                            // picker.initialize_picking_attachments(display, (width as u32, height as u32));
+                            self.picker.initialize_picking_attachments(&self.context.backend.display, (*width as u32, *height as u32));
                             self.scene.camera.scale((height/width) as f32);
                         },
                         glium::glutin::WindowEvent::MouseWheel { delta, .. } => {

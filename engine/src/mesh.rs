@@ -1,9 +1,5 @@
 use std::path::Path;
-use glium::{
-    VertexBuffer,
-    IndexBuffer,
-    implement_vertex
-};
+use glium::implement_vertex;
 use crate::context::GlBackend;
 
 #[derive(Copy, Clone)]
@@ -20,28 +16,23 @@ pub struct Normal {
     pub normal: (f32, f32, f32),
 }
 
-#[derive(Copy, Clone)]
-pub struct SimpleVertex {
-    pub position: (f32, f32, f32),
-}
-
 implement_vertex!(Vertex, id, data, color, position, tex_coords);
-implement_vertex!(SimpleVertex, position);
 implement_vertex!(Normal, normal);
 
 pub struct Mesh {
-    pub vertices: VertexBuffer<SimpleVertex>,
-    pub normals: VertexBuffer<Normal>,
-    pub indices: IndexBuffer<u32>,
+    pub vertices: Vec<Vertex>,
+    pub normals:  Option<Vec<Normal>>,
+    pub indices: Vec<u32>,
+    pub primitive: glium::index::PrimitiveType,
 }
 
 impl Mesh {
-    pub fn new(backend: &GlBackend, path: &str) -> Mesh {
+    pub fn new(_backend: &GlBackend, path: &str) -> Mesh {
         let obj = tobj::load_obj(&Path::new(&format!("./res/meshes/{}.obj", path)));
 
         assert!(obj.is_ok());
 
-        let mut vertices: Vec<SimpleVertex> = Vec::new();
+        let mut vertices: Vec<Vertex> = Vec::new();
         let mut normals: Vec<Normal> = Vec::new();
         let mut indices: Vec<u32> = Vec::new();
 
@@ -64,8 +55,12 @@ impl Mesh {
 
         	assert!(mesh.positions.len() % 3 == 0);
         	for v in 0..mesh.positions.len() / 3 {
-                vertices.push(SimpleVertex {
-                    position: (mesh.positions[3 * v], mesh.positions[3 * v + 1], mesh.positions[3 * v + 2])
+                vertices.push(Vertex {
+                    id: 0,
+                    color: (0.0, 0.0, 0.0, 0.0),
+                    data: (0.0, 0.0, 0.0, 0.0),
+                    position: (mesh.positions[3 * v], mesh.positions[3 * v + 1], mesh.positions[3 * v + 2]),
+                    tex_coords: (0.0, 0.0),
                 });
         	}
         }
@@ -90,9 +85,10 @@ impl Mesh {
         }
 
         Mesh {
-            vertices: glium::VertexBuffer::new(&backend.display, &vertices).unwrap(),
-            normals: glium::VertexBuffer::new(&backend.display, &normals).unwrap(),
-            indices: glium::IndexBuffer::new(&backend.display, glium::index::PrimitiveType::TrianglesList, &indices).unwrap(),
+            vertices,
+            normals: Some(normals),
+            indices,
+            primitive: glium::index::PrimitiveType::TrianglesList,
         }
     }
 }
