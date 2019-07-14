@@ -6,6 +6,7 @@ lint:
     stage: test
     image: rustlang/rust:nightly
     before_script:
+        - rustup update
         - rustup component add clippy
         - cargo build -v
     script:

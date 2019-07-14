@@ -8,13 +8,13 @@ mkdir -p build
 
 function release {
     cargo build --release --target "$1"
-    rm -rf target/$1/release/res
-    cp -r client/res target/$1/release
-    cp client/settings.ron target/$1/release
-    cd target/$1/release
+    rm -rf "$workspace/target/$1/release/res"
+    cp -r "$workspace/client/res" "$workspace/target/$1/release"
+    cp "$workspace/client/settings.ron" "$workspace/target/$1/release"
+    cd "$workspace/target/$1/release"
     rm -rf $2
     mv valala-client $2
-    tar -czf ../../../build/valala-$version-$3.tar.gz res valala settings.ron
+    tar -czf "$workspace/build/valala-$version-$3.tar.gz" res valala settings.ron
 }
 
 release "x86_64-unknown-linux-gnu" "valala" "linux"
