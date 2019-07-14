@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "strict", deny(warnings))]
+
 mod hex;
 mod data;
 mod view;

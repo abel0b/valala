@@ -4,12 +4,13 @@ stages:
 
 lint:
     stage: test
-    image: rust
+    image: rustlang/rust:nightly
     before_script:
         - rustup component add clippy
         - cargo build -v
     script:
-        - cargo clippy -v
+        - cargo clippy -- -D warnings
+    allow_failure: true
 
 deploy:
     stage: deploy
@@ -19,3 +20,4 @@ deploy:
         - apt install -y mingw-w64
     script:
         - ./ci/release.sh
+        - ls build

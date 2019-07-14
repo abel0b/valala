@@ -8,3 +8,6 @@ edition = "2018"
 clap = "2.33.0"
 rand = "0.6.5"
 valala-engine = { path = "../engine" }
+
+[features]
+strict = []
