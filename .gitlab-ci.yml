@@ -12,9 +12,6 @@ lint:
     script:
         - cargo clippy -- -D warnings
     allow_failure: true
-    cache:
-        paths:
-            - target/
 
 deploy:
     stage: deploy
@@ -26,3 +23,7 @@ deploy:
     script:
         - ./ci/release.sh
         - ls build
+
+cache:
+    paths:
+        - target/
