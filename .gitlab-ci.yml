@@ -12,6 +12,9 @@ lint:
     script:
         - cargo clippy -- -D warnings
     allow_failure: true
+    cache:
+        paths:
+            - target/
 
 deploy:
     stage: deploy
