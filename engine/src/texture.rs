@@ -6,10 +6,10 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub fn new(backend: &GlBackend, filename: &str) -> Texture {
-        let resource = match image::open(filename) {
+    pub fn new(backend: &GlBackend, filename: std::string::String) -> Texture {
+        let resource = match image::open(&filename) {
             Ok(resource) => resource.to_rgba(),
-            _ => panic!("could not open texture {}", filename),
+            _ => panic!("could not open texture {}", &filename),
         };
         let dimensions = resource.dimensions();
         let resource = glium::texture::RawImage2d::from_raw_rgba_reversed(&resource.into_raw(), dimensions);

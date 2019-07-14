@@ -11,9 +11,16 @@ use glium::{
     },
 };
 use crate::{
-    resource::ResourcePack,
+    resource::{ResourcePack, TextureId, ShaderId, MeshId},
     settings::Settings,
+    texture::Texture,
+    shader::Shader,
+    mesh::Mesh,
 };
+
+const TEXTURES_DIRECTORY: &'static str = "res/textures";
+const SHADERS_DIRECTORY: &'static str = "res/shaders";
+const MESHES_DIRECTORY: &'static str = "res/meshes";
 
 pub struct Mouse {
     pub position: Option<(i32, i32)>,
@@ -65,5 +72,19 @@ impl Context {
             events.push(e);
         });
         events
+    }
+
+    pub fn load_texture(&mut self, name: &'static str, filename: &str) {
+        self.resource_pack.register_texture(
+            TextureId(name),
+            Texture::new(&self.backend, format!("{}/{}", TEXTURES_DIRECTORY, filename)),
+        );
+    }
+
+    pub fn load_shader(&mut self, name: &'static str, filename: &str) {
+        self.resource_pack.register_shader(
+            ShaderId(name),
+            Shader::new(&self.backend, format!("{}/{}", SHADERS_DIRECTORY, filename)),
+        );
     }
 }

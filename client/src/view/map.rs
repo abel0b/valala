@@ -5,7 +5,7 @@ use valala_engine::{
     },
     view::View,
     scene::Entity,
-    resource::TextureId,
+    resource::{TextureId, ShaderId},
 };
 
 use crate::{
@@ -22,8 +22,9 @@ impl View for Map {
         let mut map = GeometryBuilder::new();
         map
             .visible()
-            .pickable();
-            // .texture(TextureId("terrain"));
+            .pickable()
+            .shader(ShaderId("map"))
+            .texture(TextureId("stone"));
         let mut grid = GeometryBuilder::new();
         grid
             .visible();

@@ -6,14 +6,14 @@ pub struct Shader {
 }
 
 impl Shader {
-    pub fn new(backend: &GlBackend, filename: &str) -> Shader {
-        let vertex_shader_file = match std::fs::read_to_string(format!("./res/shaders/{}.vert", filename)) {
+    pub fn new(backend: &GlBackend, path: std::string::String) -> Shader {
+        let vertex_shader_file = match std::fs::read_to_string(format!("{}.vert", &path)) {
             Ok(shader) => shader,
-            _ => panic!("could not open vertex shader {}", filename),
+            _ => panic!("could not open vertex shader {}", &path),
         };
-        let fragment_shader_file = match std::fs::read_to_string(format!("./res/shaders/{}.frag", filename)) {
+        let fragment_shader_file = match std::fs::read_to_string(format!("{}.frag", &path)) {
             Ok(shader) => shader,
-            _ => panic!("could not open fragment shader {}", filename),
+            _ => panic!("could not open fragment shader {}", &path),
         };
         Shader {
             program: glium::Program::from_source(&backend.display, &vertex_shader_file[..], &fragment_shader_file[..], None).unwrap(),
