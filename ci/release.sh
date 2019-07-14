@@ -7,14 +7,12 @@ workspace=`pwd`
 mkdir -p build
 
 function release {
+    workdir=`mktemp -d`
     cargo build --release --target "$1"
-    rm -rf "$workspace/target/$1/release/res"
-    cp -r "$workspace/client/res" "$workspace/target/$1/release"
-    cp "$workspace/client/settings.ron" "$workspace/target/$1/release"
-    cd "$workspace/target/$1/release"
-    rm -rf $2
-    mv valala-client $2
-    tar -czf "$workspace/build/valala-$version-$3.tar.gz" res valala settings.ron
+    cp -r "$workspace/client/res" "$workspace/client/settings.ron" "$workdir"
+    cp "$workspace/target/$1/release/valala-client" "$workdir/$2"
+    cd "$workdir"
+    tar czf "$workspace/build/valala-$version-$3.tar.gz" res settings.ron $2
 }
 
 release "x86_64-unknown-linux-gnu" "valala" "linux"
