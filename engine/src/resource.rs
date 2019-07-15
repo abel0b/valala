@@ -1,9 +1,5 @@
+use crate::{mesh::Mesh, shader::Shader, texture::Texture};
 use std::collections::HashMap;
-use crate::{
-    texture::Texture,
-    shader::Shader,
-    mesh::Mesh,
-};
 
 #[derive(Eq, PartialEq, Hash)]
 pub struct TextureId(pub &'static str);

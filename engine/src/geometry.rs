@@ -1,6 +1,6 @@
 use crate::{
-    mesh::{Mesh, Vertex, Normal},
-    resource::{MeshId, TextureId, ShaderId},
+    mesh::{Mesh, Normal, Vertex},
+    resource::{MeshId, ShaderId, TextureId},
 };
 
 pub enum Shape {
@@ -48,23 +48,25 @@ impl GeometryBuilder {
         self
     }
 
-    pub fn vertex<'a>(&'a mut self, position: (f32, f32, f32), tex_coords: (f32, f32), data: (f32, f32, f32)) -> &'a mut GeometryBuilder {
+    pub fn vertex<'a>(
+        &'a mut self,
+        position: (f32, f32, f32),
+        tex_coords: (f32, f32),
+        data: (f32, f32, f32),
+    ) -> &'a mut GeometryBuilder {
         // let entity_id = self.entity_id.to_be_bytes();
         // let group_id = self.group_id.to_be_bytes();
         // let id = u32::from_be_bytes([entity_id[0], entity_id[1], group_id[0], group_id[1]]);
 
-        self.vertices.push(
-            Vertex {
-                id: 0,
-                color: (0.0, 0.0, 0.0, 0.0),
-                data: (data.0, data.1, data.2, 0.0),
-                position,
-                tex_coords,
-            }
-        );
+        self.vertices.push(Vertex {
+            id: 0,
+            color: (0.0, 0.0, 0.0, 0.0),
+            data: (data.0, data.1, data.2, 0.0),
+            position,
+            tex_coords,
+        });
         self
     }
-
 
     // pub fn group(mut self) -> EntityFactory {
     //     self.group_id = self.group_id.checked_add(1).unwrap();
@@ -92,14 +94,13 @@ impl GeometryBuilder {
         match self.normals.as_mut() {
             Some(normals) => {
                 normals.push(normal);
-            },
+            }
             None => {
                 self.normals = Some(vec![normal]);
-            },
+            }
         };
         self
     }
-
 
     pub fn visible<'a>(&'a mut self) -> &'a mut GeometryBuilder {
         self.visible = true;
@@ -128,9 +129,9 @@ impl GeometryBuilder {
                     vertices: self.vertices,
                     indices: self.indices,
                     normals: self.normals,
-                    primitive: self.primitive
+                    primitive: self.primitive,
                 }),
-            }
+            },
         }
     }
 }

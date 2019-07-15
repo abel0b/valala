@@ -1,24 +1,17 @@
 #![cfg_attr(feature = "strict", deny(warnings))]
 
-mod hex;
 mod data;
-mod view;
+mod hex;
 mod lobby;
+mod view;
 
+use clap::App;
+use std::boxed::Box;
 use std::error::Error;
 use std::result::Result;
-use std::boxed::Box;
-use clap::App;
-use valala_engine::prelude::{
-    Engine,
-    Settings,
-    ResourcePack,
-    Context,
-};
+use valala_engine::prelude::{Context, Engine, ResourcePack, Settings};
 
-use crate::{
-    lobby::Lobby,
-};
+use crate::lobby::Lobby;
 
 fn main() -> Result<(), Box<dyn Error>> {
     App::new("Valala")

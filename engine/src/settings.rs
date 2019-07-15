@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use ron;
+use serde::Deserialize;
 use std::fs::File;
 
 // TODO: implement Default trait
@@ -26,11 +26,11 @@ impl Settings {
     pub fn from_file(filename: &str) -> Settings {
         let f = File::open(filename).expect("Failed opening settings file");
         match ron::de::from_reader(f) {
-           Ok(x) => x,
-           Err(e) => {
-               println!("Failed to load settings: {}", e);
-               std::process::exit(1);
-           }
-       }
+            Ok(x) => x,
+            Err(e) => {
+                println!("Failed to load settings: {}", e);
+                std::process::exit(1);
+            }
+        }
     }
 }

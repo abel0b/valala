@@ -1,7 +1,10 @@
 use glium::Surface;
 
 pub struct Picker {
-    picking_attachments: Option<(glium::texture::UnsignedTexture2d, glium::framebuffer::DepthRenderBuffer)>,
+    picking_attachments: Option<(
+        glium::texture::UnsignedTexture2d,
+        glium::framebuffer::DepthRenderBuffer,
+    )>,
     picking_pbo: glium::texture::pixel_buffer::PixelBuffer<u32>,
 }
 
@@ -13,19 +16,27 @@ impl Picker {
         }
     }
 
-    pub fn initialize_picking_attachments(&mut self, display: &glium::Display, (width, height): (u32, u32)) {
+    pub fn initialize_picking_attachments(
+        &mut self,
+        display: &glium::Display,
+        (width, height): (u32, u32),
+    ) {
         self.picking_attachments = Some((
             glium::texture::UnsignedTexture2d::empty_with_format(
                 display,
                 glium::texture::UncompressedUintFormat::U32,
                 glium::texture::MipmapsOption::NoMipmap,
-                width, height,
-            ).unwrap(),
+                width,
+                height,
+            )
+            .unwrap(),
             glium::framebuffer::DepthRenderBuffer::new(
                 display,
                 glium::texture::DepthFormat::F32,
-                width, height,
-            ).unwrap()
+                width,
+                height,
+            )
+            .unwrap(),
         ))
     }
 
@@ -43,37 +54,54 @@ impl Picker {
     }
 
     pub fn commit(&self, cursor_position: Option<(i32, i32)>) {
-        if let (Some(cursor), Some(&(ref picking_texture, _))) = (cursor_position, self.picking_attachments.as_ref()) {
+        if let (Some(cursor), Some(&(ref picking_texture, _))) =
+            (cursor_position, self.picking_attachments.as_ref())
+        {
             let read_target = glium::Rect {
                 left: (cursor.0 - 1) as u32,
-                bottom: (picking_texture.get_height().unwrap() as i32 - std::cmp::max(cursor.1 + 1, 0)) as u32,
+                bottom: (picking_texture.get_height().unwrap() as i32
+                    - std::cmp::max(cursor.1 + 1, 0)) as u32,
                 width: 1,
                 height: 1,
             };
 
-            if read_target.left < picking_texture.get_width() && read_target.bottom < picking_texture.get_height().unwrap() {
-                picking_texture.main_level()
+            if read_target.left < picking_texture.get_width()
+                && read_target.bottom < picking_texture.get_height().unwrap()
+            {
+                picking_texture
+                    .main_level()
                     .first_layer()
-                    .into_image(None).unwrap()
+                    .into_image(None)
+                    .unwrap()
                     .raw_read_to_pixel_buffer(&read_target, &self.picking_pbo);
-            }
-            else {
+            } else {
                 self.picking_pbo.write(&[0]);
             }
-        }
-        else {
+        } else {
             self.picking_pbo.write(&[0]);
         }
     }
 
-    pub fn target(&self, display: &glium::Display) -> Option<glium::framebuffer::SimpleFrameBuffer> {
+    pub fn target(
+        &self,
+        display: &glium::Display,
+    ) -> Option<glium::framebuffer::SimpleFrameBuffer> {
         if let Some((ref picking_texture, ref depth_buffer)) = self.picking_attachments {
-            picking_texture.main_level().first_layer().into_image(None).unwrap().raw_clear_buffer([0u32, 0, 0, 0]);
-            let mut target = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(display, picking_texture, depth_buffer).unwrap();
+            picking_texture
+                .main_level()
+                .first_layer()
+                .into_image(None)
+                .unwrap()
+                .raw_clear_buffer([0u32, 0, 0, 0]);
+            let mut target = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(
+                display,
+                picking_texture,
+                depth_buffer,
+            )
+            .unwrap();
             target.clear_depth(1.0);
             Some(target)
-        }
-        else {
+        } else {
             None
         }
     }

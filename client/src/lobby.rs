@@ -1,5 +1,5 @@
-use valala_engine::prelude::{Scene, GameState, Action, Context};
 use crate::data::Map;
+use valala_engine::prelude::{Action, Context, GameState, Scene};
 
 pub struct Lobby;
 

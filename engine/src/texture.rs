@@ -1,5 +1,5 @@
-use image;
 use crate::context::GlBackend;
+use image;
 
 pub struct Texture {
     pub texture: glium::texture::Texture2d,
@@ -12,7 +12,8 @@ impl Texture {
             _ => panic!("could not open texture {}", &filename),
         };
         let dimensions = resource.dimensions();
-        let resource = glium::texture::RawImage2d::from_raw_rgba_reversed(&resource.into_raw(), dimensions);
+        let resource =
+            glium::texture::RawImage2d::from_raw_rgba_reversed(&resource.into_raw(), dimensions);
         Texture {
             texture: glium::texture::Texture2d::new(&backend.display, resource).unwrap(),
         }
@@ -24,7 +25,8 @@ impl Texture {
             _ => panic!("could not load texture"),
         };
         let dimensions = resource.dimensions();
-        let resource = glium::texture::RawImage2d::from_raw_rgba_reversed(&resource.into_raw(), dimensions);
+        let resource =
+            glium::texture::RawImage2d::from_raw_rgba_reversed(&resource.into_raw(), dimensions);
         Texture {
             texture: glium::texture::Texture2d::new(&backend.display, resource).unwrap(),
         }

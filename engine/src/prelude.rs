@@ -1,10 +1,4 @@
 pub use crate::{
-    engine::Engine,
-    gamestate::GameState,
-    settings::Settings,
-    scene::Scene,
-    scene::Entity,
-    context::Context,
-    gamestate::Action,
-    resource::ResourcePack,
+    context::Context, engine::Engine, gamestate::Action, gamestate::GameState,
+    resource::ResourcePack, scene::Entity, scene::Scene, settings::Settings,
 };

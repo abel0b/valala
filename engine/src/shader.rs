@@ -1,5 +1,5 @@
-use glium::Program;
 use crate::context::GlBackend;
+use glium::Program;
 
 pub struct Shader {
     pub program: Program,
@@ -16,13 +16,25 @@ impl Shader {
             _ => panic!("could not open fragment shader {}", &path),
         };
         Shader {
-            program: glium::Program::from_source(&backend.display, &vertex_shader_file[..], &fragment_shader_file[..], None).unwrap(),
+            program: glium::Program::from_source(
+                &backend.display,
+                &vertex_shader_file[..],
+                &fragment_shader_file[..],
+                None,
+            )
+            .unwrap(),
         }
     }
 
     pub fn from_source(backend: &GlBackend, vertex_shader: &str, fragment_shader: &str) -> Shader {
         Shader {
-            program: glium::Program::from_source(&backend.display, vertex_shader, fragment_shader, None).unwrap(),
+            program: glium::Program::from_source(
+                &backend.display,
+                vertex_shader,
+                fragment_shader,
+                None,
+            )
+            .unwrap(),
         }
     }
 }

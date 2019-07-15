@@ -1,18 +1,16 @@
+use glium::{uniform, Surface};
 use std::collections::HashMap;
-use glium::{uniform,Surface};
 
 use crate::{
-    resource,
-    resource::ShaderId,
-    picking::Picker,
     camera::Camera,
     context::Context,
-    view::View,
     geometry::{Geometry, Shape},
-    mesh::{Vertex, Normal},
+    mesh::{Normal, Vertex},
+    picking::Picker,
+    resource,
+    resource::ShaderId,
+    view::View,
 };
-
-
 
 // TODO: remove unwraps
 
@@ -66,7 +64,7 @@ impl Scene {
             next_id: 1,
             views: HashMap::new(),
             data: HashMap::new(),
-            camera: Camera::isometric(1280.0 / 720.0)
+            camera: Camera::isometric(1280.0 / 720.0),
         }
     }
 
@@ -104,9 +102,9 @@ impl Scene {
                         depth: glium::Depth {
                             test: glium::DepthTest::IfLess,
                             write: true,
-                            .. Default::default()
+                            ..Default::default()
                         },
-                        .. Default::default()
+                        ..Default::default()
                     };
                     let shader = match geometry.shader_id.as_ref() {
                         Some(shader_id) => ctx.resource_pack.get_shader(shader_id),
@@ -114,12 +112,20 @@ impl Scene {
                     };
                     match &geometry.shape {
                         Shape::Data(mesh) => {
-                            let vb: glium::VertexBuffer<Vertex> = glium::VertexBuffer::new(&ctx.backend.display, &mesh.vertices).unwrap();
-                            let ib: glium::IndexBuffer<u32> = glium::IndexBuffer::new(&ctx.backend.display, mesh.primitive, &mesh.indices).unwrap();
-                            target.draw(&vb, &ib, &shader.program, &uniforms, &params).unwrap();
-                        },
-                        Shape::Mesh(mesh_id) => {
-                        },
+                            let vb: glium::VertexBuffer<Vertex> =
+                                glium::VertexBuffer::new(&ctx.backend.display, &mesh.vertices)
+                                    .unwrap();
+                            let ib: glium::IndexBuffer<u32> = glium::IndexBuffer::new(
+                                &ctx.backend.display,
+                                mesh.primitive,
+                                &mesh.indices,
+                            )
+                            .unwrap();
+                            target
+                                .draw(&vb, &ib, &shader.program, &uniforms, &params)
+                                .unwrap();
+                        }
+                        Shape::Mesh(mesh_id) => {}
                     }
                 }
             }

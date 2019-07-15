@@ -2,7 +2,7 @@ stages:
     - test
     - deploy
 
-lint:
+lint:clippy:
     stage: test
     image: rustlang/rust:nightly
     before_script:
@@ -11,6 +11,15 @@ lint:
         - cargo build -v
     script:
         - cargo clippy -- -D warnings
+    allow_failure: true
+
+lint:fmt:
+    stage: test
+    image: rustlang/rust:nightly
+    before_script:
+        - rustup component add rustfmt
+    script:
+        - cargo fmt -- --all
     allow_failure: true
 
 deploy:

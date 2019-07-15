@@ -1,7 +1,4 @@
-use crate::{
-    scene::Scene,
-    context::Context,
-};
+use crate::{context::Context, scene::Scene};
 
 pub enum Action {
     Push(Box<dyn GameState>),
@@ -25,9 +22,7 @@ pub struct GameStateMachine {
 
 impl GameStateMachine {
     pub fn new() -> GameStateMachine {
-        GameStateMachine {
-            states: Vec::new(),
-        }
+        GameStateMachine { states: Vec::new() }
     }
 
     pub fn push(&mut self, ctx: &Context, scene: &mut Scene, mut gamestate: Box<dyn GameState>) {
