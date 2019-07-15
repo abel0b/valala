@@ -10,6 +10,7 @@ pub struct MeshId(pub &'static str);
 #[derive(Eq, PartialEq, Hash)]
 pub struct ShaderId(pub &'static str);
 
+#[derive(Default)]
 pub struct ResourcePack {
     pub textures: HashMap<TextureId, Texture>,
     pub shaders: HashMap<ShaderId, Shader>,
@@ -17,18 +18,6 @@ pub struct ResourcePack {
 }
 
 impl ResourcePack {
-    pub fn new() -> ResourcePack {
-        let textures = HashMap::new();
-        let shaders = HashMap::new();
-        let meshes = HashMap::new();
-
-        ResourcePack {
-            textures,
-            shaders,
-            meshes,
-        }
-    }
-
     pub fn register_texture(&mut self, id: TextureId, texture: Texture) {
         self.textures.insert(id, texture);
     }

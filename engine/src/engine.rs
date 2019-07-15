@@ -11,7 +11,7 @@ use crate::{
     scene::Scene,
     shader::Shader,
     texture::Texture,
-    ui,
+    ui::Ui,
 };
 
 pub struct Engine {
@@ -19,18 +19,18 @@ pub struct Engine {
     pub game_state_machine: GameStateMachine,
     pub scene: Scene,
     pub picker: Picker,
-    // pub ui: ui::Ui,
+    pub ui: Ui,
 }
 
 impl Engine {
     pub fn new(ctx: Context) -> Result<Engine, Box<dyn Error>> {
         let picker = Picker::new(&ctx.backend.display);
         Ok(Engine {
-            game_state_machine: GameStateMachine::new(),
-            scene: Scene::new(),
+            game_state_machine: GameStateMachine::default(),
+            scene: Scene::default(),
             context: ctx,
             picker,
-            // ui,
+            ui: Ui::default(),
         })
     }
 
@@ -55,7 +55,7 @@ impl Engine {
         let mut previous_clock = Instant::now();
 
         self.game_state_machine
-            .push(&mut self.context, &mut self.scene, initial_state);
+            .push(&self.context, &mut self.scene, initial_state);
 
         self.picker.initialize_picking_attachments(
             &self.context.backend.display,

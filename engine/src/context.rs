@@ -1,6 +1,5 @@
 use crate::{
-    mesh::Mesh,
-    resource::{MeshId, ResourcePack, ShaderId, TextureId},
+    resource::{ResourcePack, ShaderId, TextureId},
     settings::Settings,
     shader::Shader,
     texture::Texture,
@@ -11,11 +10,12 @@ use glium::{
 };
 use std::boxed::Box;
 use std::error::Error;
+use std::f64;
 use std::result::Result;
 
-const TEXTURES_DIRECTORY: &'static str = "res/textures";
-const SHADERS_DIRECTORY: &'static str = "res/shaders";
-const MESHES_DIRECTORY: &'static str = "res/meshes";
+const TEXTURES_DIRECTORY: &str = "res/textures";
+const SHADERS_DIRECTORY: &str = "res/shaders";
+// const MESHES_DIRECTORY: &str = "res/meshes";
 
 pub struct Mouse {
     pub position: Option<(i32, i32)>,
@@ -37,7 +37,10 @@ impl GlBackend {
     fn new(window_width: u32, window_height: u32) -> Result<GlBackend, Box<dyn Error>> {
         let event_loop = glium::glutin::EventsLoop::new();
         let wb = WindowBuilder::new()
-            .with_dimensions(LogicalSize::new(window_width as f64, window_height as f64))
+            .with_dimensions(LogicalSize::new(
+                f64::from(window_width),
+                f64::from(window_height),
+            ))
             .with_title("Valala");
         let cb = ContextBuilder::new()
             .with_depth_buffer(24)

@@ -28,8 +28,8 @@ pub struct GeometryBuilder {
     primitive: glium::index::PrimitiveType,
 }
 
-impl GeometryBuilder {
-    pub fn new() -> GeometryBuilder {
+impl Default for GeometryBuilder {
+    fn default() -> GeometryBuilder {
         GeometryBuilder {
             visible: true,
             pickable: false,
@@ -42,18 +42,20 @@ impl GeometryBuilder {
             primitive: glium::index::PrimitiveType::TrianglesList,
         }
     }
+}
 
-    pub fn shader<'a>(&'a mut self, shader: ShaderId) -> &'a mut GeometryBuilder {
+impl GeometryBuilder {
+    pub fn shader(&mut self, shader: ShaderId) -> &mut GeometryBuilder {
         self.shader_id = Some(shader);
         self
     }
 
-    pub fn vertex<'a>(
-        &'a mut self,
+    pub fn vertex(
+        &mut self,
         position: (f32, f32, f32),
         tex_coords: (f32, f32),
         data: (f32, f32, f32),
-    ) -> &'a mut GeometryBuilder {
+    ) -> &mut GeometryBuilder {
         // let entity_id = self.entity_id.to_be_bytes();
         // let group_id = self.group_id.to_be_bytes();
         // let id = u32::from_be_bytes([entity_id[0], entity_id[1], group_id[0], group_id[1]]);
@@ -73,23 +75,23 @@ impl GeometryBuilder {
     //     self
     // }
 
-    pub fn texture<'a>(&'a mut self, texture_id: TextureId) -> &'a mut GeometryBuilder {
+    pub fn texture(&mut self, texture_id: TextureId) -> &mut GeometryBuilder {
         self.texture_id = Some(texture_id);
         self
     }
 
-    pub fn triangle<'a>(&'a mut self, a: u32, b: u32, c: u32) -> &'a mut GeometryBuilder {
+    pub fn triangle(&mut self, a: u32, b: u32, c: u32) -> &mut GeometryBuilder {
         self.primitive = glium::index::PrimitiveType::TrianglesList;
         self.indices.extend_from_slice(&[a, b, c]);
         self
     }
-    pub fn line<'a>(&'a mut self, a: u32, b: u32) -> &'a mut GeometryBuilder {
+    pub fn line(&mut self, a: u32, b: u32) -> &mut GeometryBuilder {
         self.primitive = glium::index::PrimitiveType::LinesList;
         self.indices.extend_from_slice(&[a, b]);
         self
     }
 
-    pub fn normal<'a>(&'a mut self, (x, y, z): (f32, f32, f32)) -> &'a mut GeometryBuilder {
+    pub fn normal(&mut self, (x, y, z): (f32, f32, f32)) -> &mut GeometryBuilder {
         let normal = Normal { normal: (x, y, z) };
         match self.normals.as_mut() {
             Some(normals) => {
@@ -102,17 +104,17 @@ impl GeometryBuilder {
         self
     }
 
-    pub fn visible<'a>(&'a mut self) -> &'a mut GeometryBuilder {
+    pub fn visible(&mut self) -> &mut GeometryBuilder {
         self.visible = true;
         self
     }
 
-    pub fn pickable<'a>(&'a mut self) -> &'a mut GeometryBuilder {
+    pub fn pickable(&mut self) -> &mut GeometryBuilder {
         self.pickable = true;
         self
     }
 
-    pub fn mesh<'a>(&'a mut self, mesh_id: MeshId) -> &'a mut GeometryBuilder {
+    pub fn mesh(&mut self, mesh_id: MeshId) -> &mut GeometryBuilder {
         self.mesh_id = Some(mesh_id);
         self
     }

@@ -19,7 +19,7 @@ lint:fmt:
     before_script:
         - rustup component add rustfmt
     script:
-        - cargo fmt -- --all
+        - cargo fmt
     allow_failure: true
 
 deploy:

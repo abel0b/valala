@@ -1,12 +1,10 @@
-use valala_engine::prelude::{Entity, Scene};
+use valala_engine::prelude::Scene;
 
 #[derive(Default)]
-pub struct Map {
-    map_entity: Entity,
-}
+pub struct Map {}
 
 impl Map {
-    pub fn new_hexagonal(scene: &mut Scene) -> Map {
-        Map { map_entity: 1 }
+    pub fn new_hexagonal(_scene: &mut Scene) -> Map {
+        Map {}
     }
 }

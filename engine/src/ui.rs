@@ -1,7 +1,9 @@
 pub struct Ui;
 
-impl Ui {
-    pub fn new(_display: &mut glium::Display) -> Ui {
-        Ui {}
+impl Default for Ui {
+    fn default() -> Ui {
+        Ui
     }
 }
+
+impl Ui {}

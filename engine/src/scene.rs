@@ -5,8 +5,7 @@ use crate::{
     camera::Camera,
     context::Context,
     geometry::{Geometry, Shape},
-    mesh::{Normal, Vertex},
-    picking::Picker,
+    mesh::Vertex,
     resource,
     resource::ShaderId,
     view::View,
@@ -24,32 +23,32 @@ pub type Entity = u16;
 //     pub indices: Vec<u32>,
 //     pub primitive: glium::index::PrimitiveType,
 // }
-
-enum Data {
-    Camera(Camera),
-    View(Box<dyn View>),
-}
-
-struct Node {
-    data: Data,
-    children: Vec<Node>,
-}
-
-impl Node {
-    fn camera(camera: Camera) -> Node {
-        Node {
-            data: Data::Camera(camera),
-            children: Vec::new(),
-        }
-    }
-
-    fn view(view: Box<dyn View>) -> Node {
-        Node {
-            data: Data::View(view),
-            children: Vec::new(),
-        }
-    }
-}
+//
+// enum Data {
+//     Camera(Camera),
+//     View(Box<dyn View>),
+// }
+//
+// struct Node {
+//     data: Data,
+//     children: Vec<Node>,
+// }
+//
+// impl Node {
+//     fn camera(camera: Camera) -> Node {
+//         Node {
+//             data: Data::Camera(camera),
+//             children: Vec::new(),
+//         }
+//     }
+//
+//     fn view(view: Box<dyn View>) -> Node {
+//         Node {
+//             data: Data::View(view),
+//             children: Vec::new(),
+//         }
+//     }
+// }
 
 pub struct Scene {
     next_id: u16,
@@ -58,8 +57,8 @@ pub struct Scene {
     pub camera: Camera,
 }
 
-impl Scene {
-    pub fn new() -> Scene {
+impl Default for Scene {
+    fn default() -> Scene {
         Scene {
             next_id: 1,
             views: HashMap::new(),
@@ -67,7 +66,9 @@ impl Scene {
             camera: Camera::isometric(1280.0 / 720.0),
         }
     }
+}
 
+impl Scene {
     pub fn add(&mut self, view: Box<dyn View>) -> Entity {
         let id = self.generate_id();
         self.data.insert(id, view.render(id));
@@ -85,7 +86,7 @@ impl Scene {
         let mut target = ctx.backend.display.draw();
         // let mut picking_target_opt = picker.target(&display);
         target.clear_color_and_depth(CLEAR_COLOR, 1.0);
-        for (entity, geometries) in self.data.iter() {
+        for (_entity, geometries) in self.data.iter() {
             for geometry in geometries.iter() {
                 if geometry.visible {
                     let uniforms = glium::uniform! {
@@ -125,7 +126,22 @@ impl Scene {
                                 .draw(&vb, &ib, &shader.program, &uniforms, &params)
                                 .unwrap();
                         }
-                        Shape::Mesh(mesh_id) => {}
+                        Shape::Mesh(mesh_id) => {
+                            let vb: glium::VertexBuffer<Vertex> = glium::VertexBuffer::new(
+                                &ctx.backend.display,
+                                &ctx.resource_pack.get_mesh(mesh_id).vertices,
+                            )
+                            .unwrap();
+                            let ib: glium::IndexBuffer<u32> = glium::IndexBuffer::new(
+                                &ctx.backend.display,
+                                ctx.resource_pack.get_mesh(mesh_id).primitive,
+                                &ctx.resource_pack.get_mesh(mesh_id).indices,
+                            )
+                            .unwrap();
+                            target
+                                .draw(&vb, &ib, &shader.program, &uniforms, &params)
+                                .unwrap();
+                        }
                     }
                 }
             }

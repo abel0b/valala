@@ -20,11 +20,13 @@ pub struct GameStateMachine {
     states: Vec<Box<dyn GameState>>,
 }
 
-impl GameStateMachine {
-    pub fn new() -> GameStateMachine {
+impl Default for GameStateMachine {
+    fn default() -> GameStateMachine {
         GameStateMachine { states: Vec::new() }
     }
+}
 
+impl GameStateMachine {
     pub fn push(&mut self, ctx: &Context, scene: &mut Scene, mut gamestate: Box<dyn GameState>) {
         if let Some(prevstate) = self.states.last_mut() {
             prevstate.pause(ctx);
@@ -44,7 +46,10 @@ impl GameStateMachine {
         }
     }
 
-    pub fn current(&mut self) -> Option<&mut Box<dyn GameState>> {
-        self.states.last_mut()
+    pub fn current(&mut self) -> Option<&mut dyn GameState> {
+        match self.states.last_mut() {
+            Some(state) => Some(state.as_mut()),
+            None => None,
+        }
     }
 }

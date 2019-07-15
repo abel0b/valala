@@ -12,7 +12,7 @@ fn handle_client(mut stream: TcpStream) {
             stream.local_addr().unwrap(),
             str::from_utf8(&buf).unwrap()
         );
-        stream.write(b"ok\n").unwrap();
+        let _len = stream.write(b"ok\n").unwrap();
     }
 }
 

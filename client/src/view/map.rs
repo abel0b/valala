@@ -11,13 +11,13 @@ use rand::Rng;
 const TILE_HEIGHT: f32 = 0.5;
 
 impl View for Map {
-    fn render(&self, entity: Entity) -> Vec<Geometry> {
-        let mut map = GeometryBuilder::new();
+    fn render(&self, _entity: Entity) -> Vec<Geometry> {
+        let mut map = GeometryBuilder::default();
         map.visible()
             .pickable()
             .shader(ShaderId("map"))
             .texture(TextureId("stone"));
-        let mut grid = GeometryBuilder::new();
+        let mut grid = GeometryBuilder::default();
         grid.visible();
         let mut tile_number = 0;
         let mut rng = rand::thread_rng();

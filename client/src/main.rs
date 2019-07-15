@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut engine = Engine::new({
         let settings = Settings::from_file("settings.ron");
-        let resource_pack = ResourcePack::new();
+        let resource_pack = ResourcePack::default();
         let mut context = Context::new(settings, resource_pack);
 
         context.load_texture("stone", "stone.png");
