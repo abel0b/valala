@@ -82,7 +82,11 @@ impl Context {
             TextureId(name),
             Texture::new(
                 &self.backend,
-                Path::new(TEXTURES_DIRECTORY).join(filename).to_str().unwrap().to_string(),
+                Path::new(TEXTURES_DIRECTORY)
+                    .join(filename)
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
             ),
         );
     }
@@ -92,7 +96,11 @@ impl Context {
             ShaderId(name),
             Shader::new(
                 &self.backend,
-                Path::new(SHADERS_DIRECTORY).join(filename).to_str().unwrap().to_string(),
+                Path::new(SHADERS_DIRECTORY)
+                    .join(filename)
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
             ),
         );
     }
