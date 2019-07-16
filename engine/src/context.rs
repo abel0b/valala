@@ -11,6 +11,7 @@ use glium::{
 use std::boxed::Box;
 use std::error::Error;
 use std::f64;
+use std::path::Path;
 use std::result::Result;
 
 const TEXTURES_DIRECTORY: &str = "res/textures";
@@ -81,7 +82,7 @@ impl Context {
             TextureId(name),
             Texture::new(
                 &self.backend,
-                format!("{}/{}", TEXTURES_DIRECTORY, filename),
+                Path::new(TEXTURES_DIRECTORY).join(filename).to_str().unwrap().to_string(),
             ),
         );
     }
@@ -89,7 +90,10 @@ impl Context {
     pub fn load_shader(&mut self, name: &'static str, filename: &str) {
         self.resource_pack.register_shader(
             ShaderId(name),
-            Shader::new(&self.backend, format!("{}/{}", SHADERS_DIRECTORY, filename)),
+            Shader::new(
+                &self.backend,
+                Path::new(SHADERS_DIRECTORY).join(filename).to_str().unwrap().to_string(),
+            ),
         );
     }
 }

@@ -11,6 +11,9 @@ cgmath = "0.17.0"
 tobj = "0.1.7"
 serde = { version = "1.0.94", features = ["derive"] }
 ron = "0.5.1"
+log = "0.4.7"
+simplelog = "0.6.0"
+mktemp = "0.4.0"
 
 [build-dependencies]
 fs_extra = "1.1.0"

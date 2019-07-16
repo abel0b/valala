@@ -1,5 +1,7 @@
+use log::info;
 use std::boxed::Box;
 use std::error::Error;
+use std::fs::File;
 use std::result::Result;
 use std::time::Instant;
 
@@ -8,7 +10,6 @@ use crate::{
     gamestate::{Action, GameState, GameStateMachine},
     picking::Picker,
     resource::{ShaderId, TextureId},
-    scene::Scene,
     shader::Shader,
     texture::Texture,
     ui::Ui,
@@ -17,7 +18,6 @@ use crate::{
 pub struct Engine {
     pub context: Context,
     pub game_state_machine: GameStateMachine,
-    pub scene: Scene,
     pub picker: Picker,
     pub ui: Ui,
 }
@@ -27,7 +27,6 @@ impl Engine {
         let picker = Picker::new(&ctx.backend.display);
         Ok(Engine {
             game_state_machine: GameStateMachine::default(),
-            scene: Scene::default(),
             context: ctx,
             picker,
             ui: Ui::default(),
@@ -35,6 +34,33 @@ impl Engine {
     }
 
     pub fn run(&mut self, initial_state: Box<dyn GameState>) {
+        simplelog::CombinedLogger::init(vec![
+            simplelog::TermLogger::new(
+                simplelog::LevelFilter::Info,
+                simplelog::Config::default(),
+                simplelog::TerminalMode::Mixed,
+            )
+            .unwrap(),
+            simplelog::WriteLogger::new(
+                simplelog::LevelFilter::Info,
+                simplelog::Config::default(),
+                File::create("valala.log").unwrap(),
+            ),
+        ])
+        .unwrap();
+        info!(
+            "GL {}",
+            self.context.backend.display.get_opengl_version_string()
+        );
+        info!(
+            "GL Implementation {}",
+            self.context.backend.display.get_opengl_vendor_string()
+        );
+        info!(
+            "Hardware {}",
+            self.context.backend.display.get_opengl_renderer_string()
+        );
+        info!("Engine started");
         self.context.resource_pack.register_shader(
             ShaderId("default"),
             Shader::from_source(
@@ -54,8 +80,7 @@ impl Engine {
 
         let mut previous_clock = Instant::now();
 
-        self.game_state_machine
-            .push(&self.context, &mut self.scene, initial_state);
+        self.game_state_machine.push(&self.context, initial_state);
 
         self.picker.initialize_picking_attachments(
             &self.context.backend.display,
@@ -74,13 +99,11 @@ impl Engine {
                     previous_clock = now;
                 }
                 Action::Push(gamestate) => {
-                    self.game_state_machine
-                        .push(&self.context, &mut self.scene, gamestate);
+                    self.game_state_machine.push(&self.context, gamestate);
                 }
                 Action::Switch(gamestate) => {
                     self.game_state_machine.pop(&self.context);
-                    self.game_state_machine
-                        .push(&self.context, &mut self.scene, gamestate);
+                    self.game_state_machine.push(&self.context, gamestate);
                 }
                 Action::Pop => {
                     self.game_state_machine.pop(&self.context);
@@ -93,14 +116,11 @@ impl Engine {
     }
 
     fn update(&mut self) -> Action {
-        let mut action = match self.game_state_machine.current() {
-            Some(gamestate) => gamestate.frame(&self.context, &mut self.scene),
-            None => Action::Quit,
-        };
+        let mut action = self.game_state_machine.update(&self.context);
 
         let _picked_object = self.picker.get_picked_object();
 
-        self.scene.render(&self.context);
+        self.game_state_machine.render(&self.context);
 
         self.picker.commit(self.context.mouse.position);
 
@@ -116,11 +136,14 @@ impl Engine {
                             &self.context.backend.display,
                             (*width as u32, *height as u32),
                         );
-                        self.scene.camera.scale((height / width) as f32);
+                        self.game_state_machine
+                            .scene()
+                            .camera
+                            .scale((height / width) as f32);
                     }
                     glium::glutin::WindowEvent::MouseWheel { delta, .. } => {
                         if let glium::glutin::MouseScrollDelta::LineDelta(_x, y) = delta {
-                            self.scene.camera.zoom(*y);
+                            self.game_state_machine.scene().camera.zoom(*y);
                         }
                     }
                     glium::glutin::WindowEvent::CursorMoved { position, .. } => {

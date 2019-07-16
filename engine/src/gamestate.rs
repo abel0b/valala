@@ -18,21 +18,27 @@ pub trait GameState {
 
 pub struct GameStateMachine {
     states: Vec<Box<dyn GameState>>,
+    scenes: Vec<Scene>,
 }
 
 impl Default for GameStateMachine {
     fn default() -> GameStateMachine {
-        GameStateMachine { states: Vec::new() }
+        GameStateMachine {
+            states: Vec::new(),
+            scenes: Vec::new(),
+        }
     }
 }
 
 impl GameStateMachine {
-    pub fn push(&mut self, ctx: &Context, scene: &mut Scene, mut gamestate: Box<dyn GameState>) {
+    pub fn push(&mut self, ctx: &Context, mut gamestate: Box<dyn GameState>) {
         if let Some(prevstate) = self.states.last_mut() {
             prevstate.pause(ctx);
         }
 
-        gamestate.enter(ctx, scene);
+        let mut scene = Scene::default();
+        gamestate.enter(ctx, &mut scene);
+        self.scenes.push(scene);
         self.states.push(gamestate);
     }
 
@@ -41,6 +47,7 @@ impl GameStateMachine {
             Some(mut gamestate) => gamestate.leave(ctx),
             None => panic!("Empty state machine"),
         }
+        self.scenes.pop().unwrap();
         if let Some(gamestate) = self.states.last_mut() {
             gamestate.resume(ctx);
         }
@@ -51,5 +58,20 @@ impl GameStateMachine {
             Some(state) => Some(state.as_mut()),
             None => None,
         }
+    }
+
+    pub fn scene(&mut self) -> &mut Scene {
+        self.scenes.last_mut().unwrap()
+    }
+
+    pub fn update(&mut self, context: &Context) -> Action {
+        match self.states.last_mut() {
+            Some(gamestate) => gamestate.frame(context, self.scenes.last_mut().unwrap()),
+            None => Action::Quit,
+        }
+    }
+
+    pub fn render(&mut self, context: &Context) {
+        self.scenes.last_mut().unwrap().render(context);
     }
 }

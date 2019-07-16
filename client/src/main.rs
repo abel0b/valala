@@ -5,13 +5,12 @@ mod hex;
 mod lobby;
 mod view;
 
+use crate::lobby::Lobby;
 use clap::App;
 use std::boxed::Box;
 use std::error::Error;
 use std::result::Result;
 use valala_engine::prelude::{Context, Engine, ResourcePack, Settings};
-
-use crate::lobby::Lobby;
 
 fn main() -> Result<(), Box<dyn Error>> {
     App::new("Valala")
