@@ -35,7 +35,7 @@ impl Engine {
 
     pub fn run(&mut self, initial_state: Box<dyn GameState>) {
         info!(
-            "GL {}",
+            "GL Version {}",
             self.context.backend.display.get_opengl_version_string()
         );
         info!(
@@ -43,7 +43,7 @@ impl Engine {
             self.context.backend.display.get_opengl_vendor_string()
         );
         info!(
-            "Hardware {}",
+            "GL Renderer {}",
             self.context.backend.display.get_opengl_renderer_string()
         );
         info!("Engine started");
@@ -122,14 +122,14 @@ impl Engine {
                             &self.context.backend.display,
                             (*width as u32, *height as u32),
                         );
-                        self.game_state_machine
-                            .scene()
-                            .camera
-                            .scale((height / width) as f32);
+                        // self.game_state_machine
+                        //     .scene()
+                        //     .camera
+                        //     .scale((height / width) as f32);
                     }
                     glium::glutin::WindowEvent::MouseWheel { delta, .. } => {
                         if let glium::glutin::MouseScrollDelta::LineDelta(_x, y) = delta {
-                            self.game_state_machine.scene().camera.zoom(*y);
+                            // self.game_state_machine.scene().camera.zoom(*y);
                         }
                     }
                     glium::glutin::WindowEvent::CursorMoved { position, .. } => {

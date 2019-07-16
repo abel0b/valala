@@ -31,6 +31,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         context.load_shader("map", "map.vert", "map.frag");
 
+        // context.load_model("character", "character.obj");
+
         context
     })?;
 

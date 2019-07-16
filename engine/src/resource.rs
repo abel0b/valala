@@ -1,11 +1,11 @@
-use crate::{mesh::Mesh, shader::Shader, texture::Texture};
+use crate::{mesh::Mesh, shader::Shader, texture::Texture, model::Model};
 use std::collections::HashMap;
 
 #[derive(Eq, PartialEq, Hash)]
 pub struct TextureId(pub &'static str);
 
 #[derive(Eq, PartialEq, Hash)]
-pub struct MeshId(pub &'static str);
+pub struct ModelId(pub &'static str);
 
 #[derive(Eq, PartialEq, Hash)]
 pub struct ShaderId(pub &'static str);
@@ -14,7 +14,7 @@ pub struct ShaderId(pub &'static str);
 pub struct ResourcePack {
     pub textures: HashMap<TextureId, Texture>,
     pub shaders: HashMap<ShaderId, Shader>,
-    pub meshes: HashMap<MeshId, Mesh>,
+    pub models: HashMap<ModelId, Model>,
 }
 
 impl ResourcePack {
@@ -26,12 +26,12 @@ impl ResourcePack {
         self.shaders.insert(id, shader);
     }
 
-    pub fn register_mesh(&mut self, id: MeshId, mesh: Mesh) {
-        self.meshes.insert(id, mesh);
+    pub fn register_model(&mut self, id: ModelId, model: Model) {
+        self.models.insert(id, model);
     }
 
-    pub fn get_mesh(&self, id: &MeshId) -> &Mesh {
-        &self.meshes.get(id).unwrap()
+    pub fn get_model(&self, id: &ModelId) -> &Model {
+        &self.models.get(id).unwrap()
     }
 
     pub fn get_texture(&self, id: &TextureId) -> &Texture {

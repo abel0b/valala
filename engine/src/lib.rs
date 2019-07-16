@@ -11,5 +11,6 @@ pub mod scene;
 pub mod settings;
 pub mod shader;
 pub mod texture;
+pub mod model;
 pub mod ui;
 pub mod view;

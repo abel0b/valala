@@ -1,8 +1,9 @@
 use crate::{
-    resource::{ResourcePack, ShaderId, TextureId},
+    resource::{ResourcePack, ShaderId, TextureId, ModelId},
     settings::Settings,
     shader::Shader,
     texture::Texture,
+    model::Model,
 };
 use glium::{
     glutin::{dpi::LogicalSize, ContextBuilder, Event, WindowBuilder},
@@ -16,7 +17,7 @@ use std::result::Result;
 
 const TEXTURES_DIRECTORY: &str = "res/textures";
 const SHADERS_DIRECTORY: &str = "res/shaders";
-// const MESHES_DIRECTORY: &str = "res/meshes";
+const MODELS_DIRECTORY: &str = "res/models";
 
 pub struct Mouse {
     pub position: Option<(i32, i32)>,
@@ -83,6 +84,19 @@ impl Context {
             Texture::new(
                 &self.backend,
                 Path::new(TEXTURES_DIRECTORY)
+                    .join(filename)
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+            ),
+        );
+    }
+
+    pub fn load_model(&mut self, name: &'static str, filename: &str) {
+        self.resource_pack.register_model(
+            ModelId(name),
+            Model::new(
+                Path::new(MODELS_DIRECTORY)
                     .join(filename)
                     .to_str()
                     .unwrap()

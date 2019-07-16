@@ -1,11 +1,11 @@
 use crate::{
     mesh::{Mesh, Normal, Vertex},
-    resource::{MeshId, ShaderId, TextureId},
+    resource::{ModelId, ShaderId, TextureId},
 };
 
 pub enum Shape {
-    Mesh(MeshId),
-    Data(Mesh),
+    Model(ModelId),
+    Mesh(Mesh),
 }
 
 pub struct Geometry {
@@ -21,7 +21,7 @@ pub struct GeometryBuilder {
     pickable: bool,
     shader_id: Option<ShaderId>,
     texture_id: Option<TextureId>,
-    mesh_id: Option<MeshId>,
+    model_id: Option<ModelId>,
     vertices: Vec<Vertex>,
     indices: Vec<u32>,
     normals: Option<Vec<Normal>>,
@@ -35,7 +35,7 @@ impl Default for GeometryBuilder {
             pickable: false,
             shader_id: None,
             texture_id: None,
-            mesh_id: None,
+            model_id: None,
             vertices: Vec::new(),
             indices: Vec::new(),
             normals: None,
@@ -114,8 +114,8 @@ impl GeometryBuilder {
         self
     }
 
-    pub fn mesh(&mut self, mesh_id: MeshId) -> &mut GeometryBuilder {
-        self.mesh_id = Some(mesh_id);
+    pub fn model(&mut self, model_id: ModelId) -> &mut GeometryBuilder {
+        self.model_id = Some(model_id);
         self
     }
 
@@ -125,9 +125,9 @@ impl GeometryBuilder {
             pickable: self.pickable,
             shader_id: self.shader_id,
             texture_id: self.texture_id,
-            shape: match self.mesh_id {
-                Some(mesh_id) => Shape::Mesh(mesh_id),
-                None => Shape::Data(Mesh {
+            shape: match self.model_id {
+                Some(model_id) => Shape::Model(model_id),
+                None => Shape::Mesh(Mesh {
                     vertices: self.vertices,
                     indices: self.indices,
                     normals: self.normals,
