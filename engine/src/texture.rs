@@ -1,5 +1,6 @@
 use crate::context::GlBackend;
 use image;
+use log::info;
 
 pub struct Texture {
     pub texture: glium::texture::Texture2d,
@@ -7,6 +8,7 @@ pub struct Texture {
 
 impl Texture {
     pub fn new(backend: &GlBackend, filename: std::string::String) -> Texture {
+        info!("Loading texture {}", &filename);
         let resource = match image::open(&filename) {
             Ok(resource) => resource.to_rgba(),
             _ => panic!("could not open texture {}", &filename),

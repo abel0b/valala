@@ -34,20 +34,6 @@ impl Engine {
     }
 
     pub fn run(&mut self, initial_state: Box<dyn GameState>) {
-        simplelog::CombinedLogger::init(vec![
-            simplelog::TermLogger::new(
-                simplelog::LevelFilter::Info,
-                simplelog::Config::default(),
-                simplelog::TerminalMode::Mixed,
-            )
-            .unwrap(),
-            simplelog::WriteLogger::new(
-                simplelog::LevelFilter::Info,
-                simplelog::Config::default(),
-                File::create("valala.log").unwrap(),
-            ),
-        ])
-        .unwrap();
         info!(
             "GL {}",
             self.context.backend.display.get_opengl_version_string()
@@ -158,4 +144,21 @@ impl Engine {
 
         action
     }
+}
+
+pub fn initialize() {
+    simplelog::CombinedLogger::init(vec![
+        simplelog::TermLogger::new(
+            simplelog::LevelFilter::Info,
+            simplelog::Config::default(),
+            simplelog::TerminalMode::Mixed,
+        )
+        .unwrap(),
+        simplelog::WriteLogger::new(
+            simplelog::LevelFilter::Info,
+            simplelog::Config::default(),
+            File::create("valala.log").unwrap(),
+        ),
+    ])
+    .unwrap();
 }

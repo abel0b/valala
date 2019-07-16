@@ -10,9 +10,11 @@ use clap::App;
 use std::boxed::Box;
 use std::error::Error;
 use std::result::Result;
-use valala_engine::prelude::{Context, Engine, ResourcePack, Settings};
+use valala_engine::prelude::{initialize, Context, Engine, ResourcePack, Settings};
 
 fn main() -> Result<(), Box<dyn Error>> {
+    initialize();
+
     App::new("Valala")
         .version(env!("CARGO_PKG_VERSION"))
         .get_matches();
@@ -27,7 +29,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         context.load_texture("dirt", "dirt.png");
         context.load_texture("water", "water.png");
 
-        context.load_shader("map", "map");
+        context.load_shader("map", "map.vert", "map.frag");
 
         context
     })?;

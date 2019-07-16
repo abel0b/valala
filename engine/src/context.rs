@@ -91,13 +91,18 @@ impl Context {
         );
     }
 
-    pub fn load_shader(&mut self, name: &'static str, filename: &str) {
+    pub fn load_shader(&mut self, name: &'static str, vertex_shader: &str, fragment_shader: &str) {
         self.resource_pack.register_shader(
             ShaderId(name),
             Shader::new(
                 &self.backend,
                 Path::new(SHADERS_DIRECTORY)
-                    .join(filename)
+                    .join(vertex_shader)
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+                Path::new(SHADERS_DIRECTORY)
+                    .join(fragment_shader)
                     .to_str()
                     .unwrap()
                     .to_string(),

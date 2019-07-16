@@ -1,25 +1,32 @@
 use crate::context::GlBackend;
 use glium::Program;
+use log::info;
 
 pub struct Shader {
     pub program: Program,
 }
 
 impl Shader {
-    pub fn new(backend: &GlBackend, path: std::string::String) -> Shader {
-        let vertex_shader_file = match std::fs::read_to_string(format!("{}.vert", &path)) {
+    pub fn new(
+        backend: &GlBackend,
+        vertex_shader_file: std::string::String,
+        fragment_shader_file: std::string::String,
+    ) -> Shader {
+        info!("Loading vertex shader {}", &vertex_shader_file);
+        info!("Loading fragment shader {}", &fragment_shader_file);
+        let vertex_shader_src = match std::fs::read_to_string(&vertex_shader_file) {
             Ok(shader) => shader,
-            _ => panic!("could not open vertex shader {}", &path),
+            _ => panic!("could not open vertex shader {}", vertex_shader_file),
         };
-        let fragment_shader_file = match std::fs::read_to_string(format!("{}.frag", &path)) {
+        let fragment_shader_src = match std::fs::read_to_string(&fragment_shader_file) {
             Ok(shader) => shader,
-            _ => panic!("could not open fragment shader {}", &path),
+            _ => panic!("could not open fragment shader {}", fragment_shader_file),
         };
         Shader {
             program: glium::Program::from_source(
                 &backend.display,
-                &vertex_shader_file[..],
-                &fragment_shader_file[..],
+                &vertex_shader_src[..],
+                &fragment_shader_src[..],
                 None,
             )
             .unwrap(),
