@@ -6,7 +6,8 @@ lint:clippy:
     stage: test
     image: rustlang/rust:nightly
     before_script:
-        - rustup update
+        - rustup toolchain install nightly-2019-07-29
+        - rustup default nightly-2019-07-29
         - rustup component add clippy
         - cargo build -v
     script:
@@ -17,6 +18,8 @@ lint:fmt:
     stage: test
     image: rustlang/rust:nightly
     before_script:
+        - rustup toolchain install nightly-2019-07-25
+        - rustup default nightly-2019-07-25
         - rustup component add rustfmt
     script:
         - cargo fmt
@@ -27,7 +30,7 @@ deploy:
     image: rustlang/rust:nightly
     before_script:
         - apt update
-        - apt install -y mingw-w64
+        - apt install -y mingw-w64 zip
         - rustup target add x86_64-pc-windows-gnu
     script:
         - ./ci/release.sh
