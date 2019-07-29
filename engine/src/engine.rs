@@ -1,7 +1,5 @@
-use log::info;
 use std::boxed::Box;
 use std::error::Error;
-use std::fs::File;
 use std::result::Result;
 use std::time::Instant;
 use glium_glyph::glyph_brush::{
@@ -143,15 +141,15 @@ impl<'a> Engine<'a> {
                         //     .scene()
                         //     .camera
                         //     .scale((height / width) as f32);
-                    }
-                    glium::glutin::WindowEvent::MouseWheel { delta, .. } => {
-                        if let glium::glutin::MouseScrollDelta::LineDelta(_x, y) = delta {
-                            // self.game_state_machine.scene().camera.zoom(*y);
-                        }
-                    }
+                    },
+                    // glium::glutin::WindowEvent::MouseWheel { delta, .. } => {
+                    //     if let glium::glutin::MouseScrollDelta::LineDelta(_x, y) = delta {
+                    //         self.game_state_machine.scene().camera.zoom(*y);
+                    //     }
+                    // },
                     glium::glutin::WindowEvent::CursorMoved { position, .. } => {
                         self.context.mouse.position = Some((position.x as i32, position.y as i32));
-                    }
+                    },
                     _ => (),
                 },
                 glium::glutin::Event::DeviceEvent { .. } => (),

@@ -1,9 +1,7 @@
-use glium::implement_vertex;
 use std::path::Path;
 use log::info;
 
 use crate::{
-    context::GlBackend,
     mesh::{
         PrimitiveType,
         Mesh,
@@ -26,7 +24,7 @@ impl Model {
         let mut normals: Vec<Normal> = Vec::new();
         let mut indices: Vec<u32> = Vec::new();
 
-        let (models, materials) = obj.unwrap();
+        let (models, _materials) = obj.unwrap();
 
         for (_i, m) in models.iter().enumerate() {
             let mesh = &m.mesh;

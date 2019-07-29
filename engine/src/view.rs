@@ -1,4 +1,4 @@
-use crate::{geometry::Geometry, scene::Entity};
+use crate::{geometry::Geometry};
 
 pub trait View {
     fn render(&self) -> Vec<Geometry>;

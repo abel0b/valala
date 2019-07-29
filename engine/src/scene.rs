@@ -7,8 +7,7 @@ use crate::{
     camera::Camera,
     context::Context,
     geometry::{Geometry, Shape},
-    mesh::{Mesh, Vertex, Normal, PrimitiveType},
-    resource,
+    mesh::{Vertex, Normal, PrimitiveType},
     resource::{ShaderId, TextureId},
     view::View,
 };
@@ -39,6 +38,7 @@ enum NodeKind {
     View,
 }
 
+#[allow(dead_code)]
 struct Node {
     dirty: bool,
     kind: NodeKind,

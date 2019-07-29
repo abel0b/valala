@@ -1,4 +1,4 @@
-use crate::{mesh::Mesh, shader::Shader, texture::Texture, model::Model};
+use crate::{shader::Shader, texture::Texture, model::Model};
 use std::collections::HashMap;
 
 #[derive(Eq, PartialEq, Hash, Copy, Clone)]
