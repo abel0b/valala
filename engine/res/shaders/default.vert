@@ -1,10 +1,8 @@
 #version 330
 
 in vec3 position;
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 perspective;
+uniform mat4 transform;
 
 void main() {
-    gl_Position =  perspective * view * model * vec4(position + vec3(0.0, 0.01, 0.0), 1.0);
+    gl_Position =  transform * vec4(position + vec3(0.0, 0.01, 0.0), 1.0);
 }

@@ -57,7 +57,7 @@ impl Camera {
     }
 
     pub fn matrix(&self) -> Matrix4<f32> {
-        self.view * self.model * self.perspective
+        self.perspective * self.view * self.model
     }
 
     pub fn scale(&mut self, aspect_ratio: f32) {

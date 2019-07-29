@@ -4,8 +4,12 @@ use std::error::Error;
 use std::fs::File;
 use std::result::Result;
 use std::time::Instant;
+use glium_glyph::glyph_brush::{
+	rusttype::Scale, Section,
+};
 
 use crate::{
+    log::LOGGER,
     context::Context,
     gamestate::{Action, GameState, GameStateMachine},
     picking::Picker,
@@ -15,15 +19,15 @@ use crate::{
     ui::Ui,
 };
 
-pub struct Engine {
-    pub context: Context,
+pub struct Engine<'a> {
+    pub context: Context<'a>,
     pub game_state_machine: GameStateMachine,
     pub picker: Picker,
     pub ui: Ui,
 }
 
-impl Engine {
-    pub fn new(ctx: Context) -> Result<Engine, Box<dyn Error>> {
+impl<'a> Engine<'a> {
+    pub fn new(ctx: Context<'a>) -> Result<Engine<'a>, Box<dyn Error>> {
         let picker = Picker::new(&ctx.backend.display);
         Ok(Engine {
             game_state_machine: GameStateMachine::default(),
@@ -34,25 +38,30 @@ impl Engine {
     }
 
     pub fn run(&mut self, initial_state: Box<dyn GameState>) {
-        info!(
-            "GL Version {}",
-            self.context.backend.display.get_opengl_version_string()
-        );
-        info!(
-            "GL Implementation {}",
-            self.context.backend.display.get_opengl_vendor_string()
-        );
-        info!(
-            "GL Renderer {}",
-            self.context.backend.display.get_opengl_renderer_string()
-        );
-        info!("Engine started");
         self.context.resource_pack.register_shader(
             ShaderId("default"),
             Shader::from_source(
                 &self.context.backend,
                 include_str!("../res/shaders/default.vert"),
                 include_str!("../res/shaders/default.frag"),
+            ),
+        );
+
+        self.context.resource_pack.register_shader(
+            ShaderId("color"),
+            Shader::from_source(
+                &self.context.backend,
+                include_str!("../res/shaders/color.vert"),
+                include_str!("../res/shaders/color.frag"),
+            ),
+        );
+
+        self.context.resource_pack.register_shader(
+            ShaderId("model"),
+            Shader::from_source(
+                &self.context.backend,
+                include_str!("../res/shaders/model.vert"),
+                include_str!("../res/shaders/model.frag"),
             ),
         );
 
@@ -80,8 +89,16 @@ impl Engine {
             match self.update() {
                 Action::Continue => {
                     let now = Instant::now();
-                    let _fps = 1_000_000_000 / (now - previous_clock).as_nanos();
-                    // println!("{}", _fps);
+                    let fps = 1_000_000_000 / (now - previous_clock).as_nanos();
+
+                    self.context.backend.glyph_brush.queue(Section {
+                        text : &format!("{} fps", fps)[..],
+                        screen_position: (8.0, 8.0),
+                        bounds : (self.context.window.width as f32, self.context.window.height as f32 / 2.0),
+                        scale: Scale::uniform(24.0),
+                        color: [1.0, 0.84, 0.27, 1.0],
+                        ..Section::default()
+                    });
                     previous_clock = now;
                 }
                 Action::Push(gamestate) => {
@@ -106,7 +123,7 @@ impl Engine {
 
         let _picked_object = self.picker.get_picked_object();
 
-        self.game_state_machine.render(&self.context);
+        self.game_state_machine.render(&mut self.context);
 
         self.picker.commit(self.context.mouse.position);
 
@@ -147,18 +164,6 @@ impl Engine {
 }
 
 pub fn initialize() {
-    simplelog::CombinedLogger::init(vec![
-        simplelog::TermLogger::new(
-            simplelog::LevelFilter::Info,
-            simplelog::Config::default(),
-            simplelog::TerminalMode::Mixed,
-        )
-        .unwrap(),
-        simplelog::WriteLogger::new(
-            simplelog::LevelFilter::Info,
-            simplelog::Config::default(),
-            File::create("valala.log").unwrap(),
-        ),
-    ])
-    .unwrap();
+    log::set_logger(&LOGGER).unwrap();
+    log::set_max_level(log::LevelFilter::Info);
 }

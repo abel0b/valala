@@ -5,10 +5,74 @@ use std::path::Path;
 #[derive(Copy, Clone)]
 pub struct Vertex {
     pub id: u32,
-    pub color: (f32, f32, f32, f32),
-    pub data: (f32, f32, f32, f32),
     pub position: (f32, f32, f32),
+    pub color: (f32, f32, f32, f32),
     pub tex_coords: (f32, f32),
+}
+
+#[derive(Eq, PartialEq, Hash, Copy, Clone)]
+pub enum PrimitiveType {
+    Points,
+    LinesList,
+    LinesListAdjacency,
+    LineStrip,
+    LineStripAdjacency,
+    LineLoop,
+    TrianglesList,
+    TrianglesListAdjacency,
+    TriangleStrip,
+    TriangleStripAdjacency,
+    TriangleFan,
+    Patches {
+        vertices_per_patch: u16,
+    },
+}
+
+impl From<&PrimitiveType> for glium::index::PrimitiveType {
+    fn from(item: &PrimitiveType) -> Self {
+        match item {
+            PrimitiveType::Points => {
+                glium::index::PrimitiveType::Points
+            },
+            PrimitiveType::LinesList => {
+                glium::index::PrimitiveType::LinesList
+            },
+            PrimitiveType::LinesListAdjacency => {
+                glium::index::PrimitiveType::LinesListAdjacency
+            },
+            PrimitiveType::LineStrip => {
+                glium::index::PrimitiveType::LineStrip
+            },
+            PrimitiveType::LineStripAdjacency => {
+                glium::index::PrimitiveType::LineStripAdjacency
+            },
+            PrimitiveType::LineLoop => {
+                glium::index::PrimitiveType::LineLoop
+            },
+            PrimitiveType::TrianglesList => {
+                glium::index::PrimitiveType::TrianglesList
+            },
+            PrimitiveType::TrianglesListAdjacency => {
+                glium::index::PrimitiveType::TrianglesListAdjacency
+            },
+            PrimitiveType::TriangleStrip => {
+                glium::index::PrimitiveType::TriangleStrip
+            },
+            PrimitiveType::TriangleStripAdjacency => {
+                glium::index::PrimitiveType::TriangleStripAdjacency
+            },
+            PrimitiveType::TriangleFan => {
+                glium::index::PrimitiveType::TriangleFan
+            },
+            PrimitiveType::Patches {
+                vertices_per_patch,
+            } => {
+                glium::index::PrimitiveType::Patches {
+                    vertices_per_patch: *vertices_per_patch,
+                }
+            },
+        }
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -16,14 +80,14 @@ pub struct Normal {
     pub normal: (f32, f32, f32),
 }
 
-implement_vertex!(Vertex, id, data, color, position, tex_coords);
+implement_vertex!(Vertex, id, position, color, tex_coords);
 implement_vertex!(Normal, normal);
 
 pub struct Mesh {
     pub vertices: Vec<Vertex>,
     pub normals: Option<Vec<Normal>>,
     pub indices: Vec<u32>,
-    pub primitive: glium::index::PrimitiveType,
+    pub primitive: PrimitiveType,
 }
 
 impl Mesh {
@@ -61,13 +125,12 @@ impl Mesh {
             for v in 0..mesh.positions.len() / 3 {
                 vertices.push(Vertex {
                     id: 0,
-                    color: (0.0, 0.0, 0.0, 0.0),
-                    data: (0.0, 0.0, 0.0, 0.0),
                     position: (
                         mesh.positions[3 * v],
                         mesh.positions[3 * v + 1],
                         mesh.positions[3 * v + 2],
                     ),
+                    color: (1.0, 0.0, 0.0, 0.0),
                     tex_coords: (0.0, 0.0),
                 });
             }
@@ -102,7 +165,7 @@ impl Mesh {
             vertices,
             normals: Some(normals),
             indices,
-            primitive: glium::index::PrimitiveType::TrianglesList,
+            primitive: PrimitiveType::TrianglesList,
         }
     }
 }

@@ -1,13 +1,13 @@
 use crate::{mesh::Mesh, shader::Shader, texture::Texture, model::Model};
 use std::collections::HashMap;
 
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone)]
 pub struct TextureId(pub &'static str);
 
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone)]
 pub struct ModelId(pub &'static str);
 
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone)]
 pub struct ShaderId(pub &'static str);
 
 #[derive(Default)]

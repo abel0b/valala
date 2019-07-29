@@ -1,7 +1,6 @@
 #![cfg_attr(feature = "strict", deny(warnings))]
 
 mod data;
-mod hex;
 mod lobby;
 mod view;
 
@@ -28,10 +27,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         context.load_texture("grass", "grass.png");
         context.load_texture("dirt", "dirt.png");
         context.load_texture("water", "water.png");
+        context.load_texture("character", "character.png");
 
         context.load_shader("map", "map.vert", "map.frag");
 
-        // context.load_model("character", "character.obj");
+        context.load_model("character", "character.obj");
 
         context
     })?;

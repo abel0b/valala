@@ -5,6 +5,7 @@ use crate::{
     texture::Texture,
     model::Model,
 };
+use log::info;
 use glium::{
     glutin::{dpi::LogicalSize, ContextBuilder, Event, WindowBuilder},
     Display,
@@ -14,6 +15,10 @@ use std::error::Error;
 use std::f64;
 use std::path::Path;
 use std::result::Result;
+use glium_glyph::GlyphBrush;
+use glium_glyph::glyph_brush::{
+	rusttype::Font,
+};
 
 const TEXTURES_DIRECTORY: &str = "res/textures";
 const SHADERS_DIRECTORY: &str = "res/shaders";
@@ -23,20 +28,27 @@ pub struct Mouse {
     pub position: Option<(i32, i32)>,
 }
 
-pub struct GlBackend {
-    pub event_loop: glium::glutin::EventsLoop,
-    pub display: glium::Display,
+pub struct Window {
+    pub width: u32,
+    pub height: u32,
 }
 
-pub struct Context {
-    pub backend: GlBackend,
+pub struct GlBackend<'a> {
+    pub event_loop: glium::glutin::EventsLoop,
+    pub display: glium::Display,
+    pub glyph_brush: GlyphBrush<'a, 'a>,
+}
+
+pub struct Context<'a> {
+    pub backend: GlBackend<'a>,
     pub settings: Settings,
     pub resource_pack: ResourcePack,
     pub mouse: Mouse,
+    pub window: Window,
 }
 
-impl GlBackend {
-    fn new(window_width: u32, window_height: u32) -> Result<GlBackend, Box<dyn Error>> {
+impl<'a> GlBackend<'a> {
+    fn new(window_width: u32, window_height: u32) -> Result<GlBackend<'a>, Box<dyn Error>> {
         let event_loop = glium::glutin::EventsLoop::new();
         let wb = WindowBuilder::new()
             .with_dimensions(LogicalSize::new(
@@ -48,24 +60,47 @@ impl GlBackend {
             .with_depth_buffer(24)
             .with_multisampling(4);
         let display = Display::new(wb, cb, &event_loop)?;
+
+        let consolas: &[u8] = include_bytes!("../res/fonts/Consolas-Regular.ttf");
+        let fonts = vec![Font::from_bytes(consolas).unwrap()];
+
+        let glyph_brush = GlyphBrush::new(&display, fonts);
+        info!(
+            "GL Version {}",
+            display.get_opengl_version_string()
+        );
+        info!(
+            "GL Implementation {}",
+            display.get_opengl_vendor_string()
+        );
+        info!(
+            "GL Renderer {}",
+            display.get_opengl_renderer_string()
+        );
         Ok(GlBackend {
             event_loop,
             display,
+            glyph_brush,
         })
     }
 }
 
-impl Context {
-    pub fn new(settings: Settings, resource_pack: ResourcePack) -> Context {
+impl<'a> Context<'a> {
+    pub fn new(settings: Settings, resource_pack: ResourcePack) -> Context<'a> {
         let backend = GlBackend::new(
             settings.graphics.window_width,
             settings.graphics.window_height,
         )
         .unwrap();
+        let window = Window {
+            width: settings.graphics.window_width,
+            height: settings.graphics.window_height,
+        };
         Context {
             backend,
             settings,
             resource_pack,
+            window,
             mouse: Mouse { position: None },
         }
     }

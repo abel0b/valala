@@ -1,12 +1,12 @@
-#version 140
+#version 330
 
-in uint id;
 in vec3 position;
+in vec4 color;
 uniform mat4 transform;
 
-flat out uint v_id;
+out vec4 v_color;
 
 void main() {
-    v_id = id;
+    v_color = color;
     gl_Position =  transform * vec4(position, 1.0);
 }

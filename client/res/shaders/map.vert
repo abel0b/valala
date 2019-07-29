@@ -6,9 +6,7 @@ in vec3 position;
 in vec2 tex_coords;
 in vec3 normal;
 
-uniform mat4 model;
-uniform mat4 perspective;
-uniform mat4 view;
+uniform mat4 transform;
 
 out vec2 v_tex_coords;
 out vec4 v_data;
@@ -17,7 +15,6 @@ out vec3 v_normal;
 void main() {
     v_data = data;
     v_tex_coords = tex_coords;
-    mat4 matrix = perspective * view * model;
-    v_normal = transpose(inverse(mat3(matrix))) * normal;
-    gl_Position = matrix * vec4(position, 1.0);
+    v_normal = transpose(inverse(mat3(transform))) * normal;
+    gl_Position = transform * vec4(position, 1.0);
 }

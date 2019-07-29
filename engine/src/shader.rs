@@ -12,8 +12,6 @@ impl Shader {
         vertex_shader_file: std::string::String,
         fragment_shader_file: std::string::String,
     ) -> Shader {
-        info!("Loading vertex shader {}", &vertex_shader_file);
-        info!("Loading fragment shader {}", &fragment_shader_file);
         let vertex_shader_src = match std::fs::read_to_string(&vertex_shader_file) {
             Ok(shader) => shader,
             _ => panic!("could not open vertex shader {}", vertex_shader_file),
@@ -22,6 +20,8 @@ impl Shader {
             Ok(shader) => shader,
             _ => panic!("could not open fragment shader {}", fragment_shader_file),
         };
+        info!("Loaded vertex shader '{}'", &vertex_shader_file);
+        info!("Loaded fragment shader '{}'", &fragment_shader_file);
         Shader {
             program: glium::Program::from_source(
                 &backend.display,

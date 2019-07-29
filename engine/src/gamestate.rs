@@ -71,7 +71,7 @@ impl GameStateMachine {
         }
     }
 
-    pub fn render(&mut self, context: &Context) {
+    pub fn render(&mut self, context: &mut Context) {
         self.scenes.last_mut().unwrap().render(context);
     }
 }

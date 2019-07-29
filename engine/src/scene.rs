@@ -1,13 +1,15 @@
 use glium::{uniform, Surface};
-use std::collections::HashMap;
+use hashbrown::{HashMap, hash_map::Iter};
 use cgmath::num_traits::identities::One;
+use cgmath::Matrix4;
+use std::convert::TryInto;
 use crate::{
     camera::Camera,
     context::Context,
     geometry::{Geometry, Shape},
-    mesh::Vertex,
+    mesh::{Mesh, Vertex, Normal, PrimitiveType},
     resource,
-    resource::ShaderId,
+    resource::{ShaderId, TextureId},
     view::View,
 };
 
@@ -24,169 +26,247 @@ pub type Entity = u16;
 //     pub primitive: glium::index::PrimitiveType,
 // }
 
-enum Data {
-    Camera(Camera),
-    View(Box<dyn View>),
+#[derive(Eq, PartialEq, Hash, Copy, Clone)]
+pub enum NodeId {
+    Root,
+    Camera(u32),
+    View(u32),
 }
 
-pub struct Node {
-    data: Data,
-    children: Vec<Node>,
+enum NodeKind {
+    Group,
+    Camera,
+    View,
 }
 
-impl Node {
-    pub fn append(&mut self, node: Node) -> &mut Node {
-        self.children.push(node);
-        self.children.last_mut().unwrap()
+struct Node {
+    dirty: bool,
+    kind: NodeKind,
+    parent: Option<NodeId>,
+    children: Vec<NodeId>,
+}
+
+struct CacheEntry {
+    transform: Matrix4<f32>,
+    vertices: Vec<Vertex>,
+    normals: Option<Vec<Normal>>,
+    indices: Vec<u32>,
+}
+
+struct Cache {
+    entries: HashMap<(ShaderId, TextureId, PrimitiveType, bool), CacheEntry>, // add Transform
+}
+
+impl Cache {
+    pub fn new() -> Cache {
+        Default::default()
     }
 
-    pub fn with_camera(camera: Camera) -> Node {
-        Node {
-            data: Data::Camera(camera),
-            children: Vec::new(),
+    pub fn iter<'a>(&'a self) -> Iter<(ShaderId, TextureId, PrimitiveType, bool), CacheEntry> {
+        self.entries.iter()
+    }
+
+    pub fn add(&mut self, context: &Context, transform: cgmath::Matrix4<f32>, geometry: &Geometry) {
+        let mesh = match &geometry.shape {
+            Shape::Mesh(mesh) => {
+                mesh
+            },
+            Shape::Model(model_id) => {
+                &context.resource_pack.get_model(&model_id).mesh
+            }
+        };
+        match self.entries.get_mut(&(geometry.shader_id, geometry.texture_id, mesh.primitive, mesh.normals.is_some())) {
+            Some(entry) => {
+                let offset: u32 = entry.vertices.len().try_into().unwrap();
+                entry.vertices.extend(&mesh.vertices);
+                entry.indices.extend(&mesh.indices.iter().map(|&i| i+offset).collect::<Vec<u32>>());
+                if let Some(normals) = &mesh.normals {
+                    entry.normals.as_mut().unwrap().extend(normals);
+                }
+            },
+            None => {
+                self.entries.insert(
+                    (geometry.shader_id, geometry.texture_id, mesh.primitive, mesh.normals.is_some()),
+                    CacheEntry {
+                        transform,
+                        normals: match &mesh.normals {
+                            Some(normals) => Some(normals.clone()),
+                            None => None
+                        },
+                        vertices: mesh.vertices.clone(),
+                        indices: mesh.indices.clone(),
+                    }
+                );
+            }
         }
     }
 
-    pub fn with_view(view: Box<dyn View>) -> Node {
-        Node {
-            data: Data::View(view),
-            children: Vec::new(),
+}
+
+impl Default for Cache {
+    fn default() -> Cache {
+        Cache {
+            entries: HashMap::new(),
         }
     }
 }
 
 pub struct Scene {
-    next_id: u16,
-    // views: HashMap<Entity, Box<dyn View>>,
-    // data: HashMap<Entity, Vec<Geometry>>,
-    root: Option<Node>,
-    // pub camera: Camera,
+    last_id: u32,
+    nodes: HashMap<NodeId, Node>,
+    cameras: HashMap<NodeId, Camera>,
+    views: HashMap<NodeId, Box<dyn View>>,
+    geometries: HashMap<NodeId, Vec<Geometry>>,
+    cache: Cache,
+}
+
+impl Node {
+    pub fn with_kind_and_parent(kind: NodeKind, parent: Option<NodeId>) -> Node {
+        Node {
+            parent,
+            dirty: true,
+            kind,
+            children: Vec::new(),
+        }
+    }
 }
 
 impl Default for Scene {
     fn default() -> Scene {
+        let mut nodes = HashMap::new();
+        nodes.insert(NodeId::Root, Node::with_kind_and_parent(NodeKind::Group, None));
         Scene {
-            next_id: 1,
-            // views: HashMap::new(),
-            // data: HashMap::new(),
-            root: None,
-            // camera: Camera::isometric(1280.0 / 720.0),
+            last_id: 0,
+            nodes,
+            cache: Cache::new(),
+            cameras: HashMap::new(),
+            views: HashMap::new(),
+            geometries: HashMap::new(),
         }
     }
 }
 
 impl Scene {
-    pub fn append(&mut self, node: Node) -> &mut Node {
-        let id = self.generate_id();
-        match self.root.as_mut() {
-            Some(root) => {
-                root.append(node);
+    pub fn new() -> Scene {
+        Default::default()
+    }
+
+    #[inline]
+    fn next_id(&mut self) -> u32 {
+        self.last_id = self.last_id.checked_add(1).unwrap();
+        self.last_id
+    }
+
+    pub fn add_view(&mut self, parent_id: NodeId, view: Box<dyn View>) -> Option<NodeId> {
+        let id = NodeId::View(self.next_id());
+        match self.nodes.get_mut(&parent_id) {
+            Some(parent) => {
+                parent.children.push(id);
+                self.nodes.insert(id, Node::with_kind_and_parent(NodeKind::View, Some(parent_id)));
+                self.geometries.insert(id, view.render());
+                self.views.insert(id, view);
+                Some(id)
             },
-            None => {
-                self.root = Some(node);
-            }
+            None => None,
         }
-        // self.data.insert(id, view.render(id));
-        // self.views.insert(id, view);
-        self.root.as_mut().unwrap()
     }
 
-    fn generate_id(&mut self) -> Entity {
-        let id = self.next_id;
-        self.next_id = self.next_id.checked_add(1).unwrap();
-        id
+    pub fn add_camera(&mut self, parent_id: NodeId, camera: Camera) -> Option<NodeId> {
+        let id = NodeId::Camera(self.next_id());
+        match self.nodes.get_mut(&parent_id) {
+            Some(parent) => {
+                parent.children.push(id);
+                self.nodes.insert(id, Node::with_kind_and_parent(NodeKind::Camera, Some(parent_id)));
+                self.cameras.insert(id, camera);
+                Some(id)
+            },
+            None => None,
+        }
     }
 
-    pub fn render(&mut self, ctx: &Context) {
+    pub fn render(&mut self, ctx: &mut Context) {
         let mut target = ctx.backend.display.draw();
         // let mut picking_target_opt = picker.target(&display);
         target.clear_color_and_depth(CLEAR_COLOR, 1.0);
+        ctx.backend.glyph_brush.draw_queued(&ctx.backend.display, &mut target);
 
-        if let Some(root) = self.root.as_mut() {
+
+        if self.nodes[&NodeId::Root].dirty {
+            self.cache = Cache::new();
+            let mut stack: Vec<NodeId> = vec![NodeId::Root];
             let mut transforms: Vec<cgmath::Matrix4<f32>> = vec![cgmath::Matrix4::one()];
-            let mut stack: Vec<&mut Node> = vec![root];
 
             while !stack.is_empty() {
-                let node = stack.pop().unwrap();
-                let mut camera = transforms.pop().unwrap();
+                let node_id = stack.pop().unwrap();
+                let node = &self.nodes.get(&node_id).unwrap();
+                let mut transform = transforms.pop().unwrap();
 
-                match &node.data {
-                    Data::Camera(local_camera) => {
-                        camera = camera * local_camera.matrix();
+                match node.kind {
+                    NodeKind::Camera => {
+                        transform = transform * self.cameras.get(&node_id).unwrap().matrix();
                     },
-                    Data::View(view) => {
-                        println!("view");
+                    NodeKind::View => {
+                        for geometry in self.geometries.get(&node_id).unwrap().iter() {
+                            self.cache.add(
+                                ctx,
+                                transform,
+                                &geometry,
+                            );
+                        }
                     },
+                    NodeKind::Group => {},
                 }
 
-                for child in node.children.iter_mut() {
-                    stack.push(child);
-                    transforms.push(camera);
+                for child in node.children.iter() {
+                    stack.push(*child);
+                    transforms.push(transform);
                 }
             }
         }
 
+        for ((shader_id, texture_id, primitive, _has_normals), entry) in self.cache.iter() {
+            let uniforms = glium::uniform! {
+                u_light: [-1.0, 0.4, 0.9f32],
+                tex: &ctx.resource_pack.get_texture(&texture_id).texture,
+                transform: cgmath::conv::array4x4(entry.transform),
+            };
+            let params = glium::DrawParameters {
+                depth: glium::Depth {
+                    test: glium::DepthTest::IfLess,
+                    write: true,
+                    ..Default::default()
+                },
+                ..Default::default()
+            };
+            let shader = ctx.resource_pack.get_shader(&shader_id);
+            let vb: glium::VertexBuffer<Vertex> =
+            glium::VertexBuffer::new(&ctx.backend.display, &entry.vertices)
+            .unwrap();
+            let nb: Option<glium::VertexBuffer<Normal>> = match &entry.normals {
+                Some(normals) => Some(glium::VertexBuffer::new(&ctx.backend.display, &normals)
+                .unwrap()),
+                None => None,
+            };
+            let ib: glium::IndexBuffer<u32> = glium::IndexBuffer::new(
+                &ctx.backend.display,
+                primitive.into(),
+                &entry.indices,
+            )
+            .unwrap();
+            match nb {
+                Some(normals) => {
+                    target
+                    .draw((&vb, &normals), &ib, &shader.program, &uniforms, &params)
+                    .unwrap();
+                },
+                None => {
+                    target
+                    .draw(&vb, &ib, &shader.program, &uniforms, &params)
+                    .unwrap();
+                }
+            }
+        }
 
-        // for (_entity, geometries) in self.data.iter() {
-        //     for geometry in geometries.iter() {
-        //         if geometry.visible {
-        //             let uniforms = glium::uniform! {
-        //                 u_light: [-1.0, 0.4, 0.9f32],
-        //                 tex: match &geometry.texture_id {
-        //                     Some(tex) => &ctx.resource_pack.get_texture(&tex).texture,
-        //                     None => &ctx.resource_pack.get_texture(&resource::TextureId("default")).texture,
-        //                 },
-        //                 view: self.camera.view,
-        //                 model: self.camera.model,
-        //                 perspective: self.camera.perspective,
-        //             };
-        //             let params = glium::DrawParameters {
-        //                 depth: glium::Depth {
-        //                     test: glium::DepthTest::IfLess,
-        //                     write: true,
-        //                     ..Default::default()
-        //                 },
-        //                 ..Default::default()
-        //             };
-        //             let shader = match geometry.shader_id.as_ref() {
-        //                 Some(shader_id) => ctx.resource_pack.get_shader(shader_id),
-        //                 None => ctx.resource_pack.get_shader(&ShaderId("default")),
-        //             };
-        //             match &geometry.shape {
-        //                 Shape::Mesh(mesh) => {
-        //                     let vb: glium::VertexBuffer<Vertex> =
-        //                         glium::VertexBuffer::new(&ctx.backend.display, &mesh.vertices)
-        //                             .unwrap();
-        //                     let ib: glium::IndexBuffer<u32> = glium::IndexBuffer::new(
-        //                         &ctx.backend.display,
-        //                         mesh.primitive,
-        //                         &mesh.indices,
-        //                     )
-        //                     .unwrap();
-        //                     target
-        //                         .draw(&vb, &ib, &shader.program, &uniforms, &params)
-        //                         .unwrap();
-        //                 }
-        //                 Shape::Model(model_id) => {
-        //                     let vb: glium::VertexBuffer<Vertex> = glium::VertexBuffer::new(
-        //                         &ctx.backend.display,
-        //                         &ctx.resource_pack.get_model(model_id).mesh.vertices,
-        //                     )
-        //                     .unwrap();
-        //                     let ib: glium::IndexBuffer<u32> = glium::IndexBuffer::new(
-        //                         &ctx.backend.display,
-        //                         ctx.resource_pack.get_model(model_id).mesh.primitive,
-        //                         &ctx.resource_pack.get_model(model_id).mesh.indices,
-        //                     )
-        //                     .unwrap();
-        //                     target
-        //                         .draw(&vb, &ib, &shader.program, &uniforms, &params)
-        //                         .unwrap();
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
 
         target.finish().unwrap();
     }
