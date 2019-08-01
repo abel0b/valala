@@ -209,7 +209,7 @@ impl Scene {
                         for geometry in self.geometries.get(&node_id).unwrap().iter() {
                             self.cache.add(
                                 ctx,
-                                transform,
+                                transform * geometry.transform,
                                 &geometry,
                             );
                         }

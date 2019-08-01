@@ -15,3 +15,4 @@ pub mod model;
 pub mod ui;
 pub mod view;
 pub mod log;
+pub mod math;
