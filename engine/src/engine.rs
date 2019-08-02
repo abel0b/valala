@@ -9,33 +9,36 @@ use glium_glyph::glyph_brush::{
 use crate::{
     log::LOGGER,
     context::Context,
-    gamestate::{Action, GameState, GameStateMachine},
+    stage::{Transition, Stage, StageMachine},
     picking::Picker,
     resource::{ShaderId, TextureId},
     shader::Shader,
     texture::Texture,
     ui::Ui,
+	store::Store,
 };
 
-pub struct Engine<'a> {
+pub struct Engine<'a,S,A> {
     pub context: Context<'a>,
-    pub game_state_machine: GameStateMachine,
+    pub stage_machine: StageMachine<S,A>,
     pub picker: Picker,
     pub ui: Ui,
+	pub store: Store<S, A>,
 }
 
-impl<'a> Engine<'a> {
-    pub fn new(ctx: Context<'a>) -> Result<Engine<'a>, Box<dyn Error>> {
+impl<'a,S,A> Engine<'a,S,A> {
+    pub fn new(ctx: Context<'a>, store: Store<S, A>) -> Result<Engine<'a, S, A>, Box<dyn Error>> {
         let picker = Picker::new(&ctx.backend.display);
         Ok(Engine {
-            game_state_machine: GameStateMachine::default(),
+            stage_machine: StageMachine::default(),
             context: ctx,
             picker,
             ui: Ui::default(),
+			store,
         })
     }
 
-    pub fn run(&mut self, initial_state: Box<dyn GameState>) {
+    pub fn run(&mut self, initial_state: Box<dyn Stage<S,A>>) {
         self.context.resource_pack.register_shader(
             ShaderId("default"),
             Shader::from_source(
@@ -73,7 +76,7 @@ impl<'a> Engine<'a> {
 
         let mut previous_clock = Instant::now();
 
-        self.game_state_machine.push(&self.context, initial_state);
+        self.stage_machine.push(&self.context, initial_state);
 
         self.picker.initialize_picking_attachments(
             &self.context.backend.display,
@@ -85,7 +88,7 @@ impl<'a> Engine<'a> {
 
         loop {
             match self.update() {
-                Action::Continue => {
+                Transition::Continue => {
                     let now = Instant::now();
                     let fps = 1_000_000_000 / (now - previous_clock).as_nanos();
 
@@ -99,36 +102,36 @@ impl<'a> Engine<'a> {
                     });
                     previous_clock = now;
                 }
-                Action::Push(gamestate) => {
-                    self.game_state_machine.push(&self.context, gamestate);
+                Transition::Push(stage) => {
+                    self.stage_machine.push(&self.context, stage);
                 }
-                Action::Switch(gamestate) => {
-                    self.game_state_machine.pop(&self.context);
-                    self.game_state_machine.push(&self.context, gamestate);
+                Transition::Switch(stage) => {
+                    self.stage_machine.pop(&self.context);
+                    self.stage_machine.push(&self.context, stage);
                 }
-                Action::Pop => {
-                    self.game_state_machine.pop(&self.context);
+                Transition::Pop => {
+                    self.stage_machine.pop(&self.context);
                 }
-                Action::Quit => {
+                Transition::Quit => {
                     break;
                 }
             }
         }
     }
 
-    fn update(&mut self) -> Action {
-        let mut action = self.game_state_machine.update(&self.context);
+    fn update(&mut self) -> Transition<S,A> {
+        let mut action = self.stage_machine.update(&self.context, &mut self.store);
 
         let _picked_object = self.picker.get_picked_object();
 
-        self.game_state_machine.render(&mut self.context);
+        self.stage_machine.render(&mut self.context);
 
         self.picker.commit(self.context.mouse.position);
 
         for e in self.context.events().iter() {
             match e {
                 glium::glutin::Event::WindowEvent { event, .. } => match event {
-                    glium::glutin::WindowEvent::CloseRequested => action = Action::Quit,
+                    glium::glutin::WindowEvent::CloseRequested => action = Transition::Quit,
                     glium::glutin::WindowEvent::Resized(glium::glutin::dpi::LogicalSize {
                         width,
                         height,
@@ -137,14 +140,14 @@ impl<'a> Engine<'a> {
                             &self.context.backend.display,
                             (*width as u32, *height as u32),
                         );
-                        // self.game_state_machine
+                        // self.stage_machine
                         //     .scene()
                         //     .camera
                         //     .scale((height / width) as f32);
                     },
                     // glium::glutin::WindowEvent::MouseWheel { delta, .. } => {
                     //     if let glium::glutin::MouseScrollDelta::LineDelta(_x, y) = delta {
-                    //         self.game_state_machine.scene().camera.zoom(*y);
+                    //         self.stage_machine.scene().camera.zoom(*y);
                     //     }
                     // },
                     glium::glutin::WindowEvent::CursorMoved { position, .. } => {

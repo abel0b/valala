@@ -1,6 +1,6 @@
 #![cfg_attr(feature = "strict", deny(warnings))]
 
-mod data;
+mod store;
 mod lobby;
 mod view;
 
@@ -18,7 +18,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .version(env!("CARGO_PKG_VERSION"))
         .get_matches();
 
-    let mut engine = Engine::new({
+    let context = {
         let settings = Settings::from_file("settings.ron");
         let resource_pack = ResourcePack::default();
         let mut context = Context::new(settings, resource_pack);
@@ -34,7 +34,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         context.load_model("character", "character.obj");
 
         context
-    })?;
+    };
+
+    let store = store::create();
+
+    let mut engine = Engine::new(context, store)?;
 
     engine.run(Box::new(Lobby));
 

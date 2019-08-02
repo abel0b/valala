@@ -1,7 +1,7 @@
 pub mod camera;
 pub mod context;
 pub mod engine;
-pub mod gamestate;
+pub mod stage;
 pub mod geometry;
 pub mod mesh;
 pub mod picking;
@@ -16,3 +16,4 @@ pub mod ui;
 pub mod view;
 pub mod log;
 pub mod math;
+pub mod store;

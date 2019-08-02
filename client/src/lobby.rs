@@ -1,17 +1,21 @@
 use valala_engine::{
-    prelude::{Action, Context, GameState, Scene},
+    prelude::{Transition, Context, Stage, Scene},
     camera::Camera,
     scene::NodeId,
+    store::Store,
 };
 use rand::Rng;
-use crate::view::{
-    Character,
-    Tile,
+use crate::{
+    view::{
+        Character,
+        Tile,
+    },
+    store::{State, Action},
 };
 
 pub struct Lobby;
 
-impl GameState for Lobby {
+impl Stage<State, Action> for Lobby {
     fn enter(&mut self, ctx: &Context, scene: &mut Scene) {
         // let map = Map::new_hexagonal(scene);
         let camera = scene.add_camera(NodeId::Root, Camera::isometric(ctx.window.height as f32 / ctx.window.width as f32)).unwrap();
@@ -32,7 +36,8 @@ impl GameState for Lobby {
         let _character = scene.add_view(camera, Box::new(Character::new()));
     }
 
-    fn frame(&mut self, _ctx: &Context, _scene: &mut Scene) -> Action {
-        Action::Continue
+    fn frame(&mut self, _ctx: &Context, _scene: &mut Scene, store: &mut Store<State,Action>) -> Transition<State,Action> {
+        store.dispatch(Action::Oof);
+        Transition::Continue
     }
 }

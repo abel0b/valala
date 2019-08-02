@@ -5,6 +5,7 @@ use valala_engine::{
     math::Deg,
 };
 
+#[derive(Copy, Clone)]
 enum Orientation {
     Zero = 0,
     One = 1,
@@ -14,11 +15,23 @@ enum Orientation {
     Five = 5,
 }
 
-pub struct Character;
+impl Orientation {
+    pub fn angle(self) -> Deg<f32> {
+        Deg((self as i32 as f32) * 60.0)
+    }
+}
+
+pub struct Character {
+    orientation: Orientation,
+    scale: f32,
+}
 
 impl Default for Character {
     fn default() -> Character {
-        Character
+        Character {
+            orientation: Orientation::One,
+            scale: 1.0,
+        }
     }
 }
 
@@ -31,9 +44,8 @@ impl Character {
 impl View for Character {
     fn render(&self) -> Vec<Geometry> {
         let mut character = GeometryBuilder::with_model_and_texture(ModelId("character"), TextureId("character"));
-        character.scale(0.45);
-        let orientation = Orientation::Four;
-        let angle = Deg((orientation as i32 as f32) * 60.0);
+        character.scale(self.scale * 0.45);
+        let angle = self.orientation.angle();
         character.rotate_y(angle);
 
         vec![character.build()]
