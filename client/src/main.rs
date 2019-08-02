@@ -1,10 +1,10 @@
 #![cfg_attr(feature = "strict", deny(warnings))]
 
 mod store;
-mod lobby;
+mod stage;
 mod view;
 
-use crate::lobby::Lobby;
+use crate::stage::Title;
 use clap::App;
 use std::boxed::Box;
 use std::error::Error;
@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut engine = Engine::new(context, store)?;
 
-    engine.run(Box::new(Lobby));
+    engine.run(Box::new(Title));
 
     Ok(())
 }

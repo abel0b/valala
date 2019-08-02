@@ -4,6 +4,7 @@ use crate::{
     shader::Shader,
     texture::Texture,
     model::Model,
+    clock::Clock,
 };
 use log::info;
 use glium::{
@@ -45,6 +46,7 @@ pub struct Context<'a> {
     pub resource_pack: ResourcePack,
     pub mouse: Mouse,
     pub window: Window,
+    pub clock: Clock,
 }
 
 impl<'a> GlBackend<'a> {
@@ -102,6 +104,7 @@ impl<'a> Context<'a> {
             resource_pack,
             window,
             mouse: Mouse { position: None },
+            clock: Clock::new(),
         }
     }
 

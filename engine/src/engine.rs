@@ -74,8 +74,6 @@ impl<'a,S,A> Engine<'a,S,A> {
             ),
         );
 
-        let mut previous_clock = Instant::now();
-
         self.stage_machine.push(&self.context, initial_state);
 
         self.picker.initialize_picking_attachments(
@@ -89,18 +87,15 @@ impl<'a,S,A> Engine<'a,S,A> {
         loop {
             match self.update() {
                 Transition::Continue => {
-                    let now = Instant::now();
-                    let fps = 1_000_000_000 / (now - previous_clock).as_nanos();
-
+					self.context.clock.tick();
                     self.context.backend.glyph_brush.queue(Section {
-                        text : &format!("{} fps", fps)[..],
+                        text : &format!("{} fps", self.context.clock.fps)[..],
                         screen_position: (8.0, 8.0),
                         bounds : (self.context.window.width as f32, self.context.window.height as f32 / 2.0),
                         scale: Scale::uniform(24.0),
                         color: [1.0, 0.84, 0.27, 1.0],
                         ..Section::default()
                     });
-                    previous_clock = now;
                 }
                 Transition::Push(stage) => {
                     self.stage_machine.push(&self.context, stage);
