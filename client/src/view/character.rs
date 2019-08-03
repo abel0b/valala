@@ -1,7 +1,6 @@
 use valala_engine::{
-    geometry::{Geometry, GeometryBuilder},
-    resource::{TextureId, ModelId},
-    view::View,
+    resource::{TextureId, ModelId, ShaderId},
+    view::{Renderable, View, ViewBuilder},
     math::Deg,
 };
 
@@ -41,13 +40,16 @@ impl Character {
     }
 }
 
-impl View for Character {
-    fn render(&self) -> Vec<Geometry> {
-        let mut character = GeometryBuilder::with_model_and_texture(ModelId("character"), TextureId("character"));
-        character.scale(self.scale * 0.45);
-        let angle = self.orientation.angle();
-        character.rotate_y(angle);
+impl Renderable for Character {
+    fn render(&self, mut view: ViewBuilder) -> View {
+        let mut character = view.geometry();
+        character
+            .model(ModelId("character"))
+            .shader(ShaderId("model"))
+            .texture(TextureId("character"))
+            .scale(self.scale * 0.45)
+            .rotate_y(self.orientation.angle());
 
-        vec![character.build()]
+        view.build()
     }
 }

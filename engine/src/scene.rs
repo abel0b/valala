@@ -9,8 +9,9 @@ use crate::{
     geometry::{Geometry, Shape},
     mesh::{Vertex, Normal, PrimitiveType},
     resource::{ShaderId, TextureId},
-    view::View,
+    view::{View, ViewBuilder, Renderable},
     color::Color,
+    picking::Picker,
 };
 
 // TODO: remove unwraps
@@ -28,13 +29,13 @@ pub type Entity = u16;
 pub enum NodeId {
     Root,
     Camera(u32),
-    View(u32),
+    Renderable(u32),
 }
 
 enum NodeKind {
     Group,
     Camera,
-    View,
+    Renderable,
 }
 
 #[allow(dead_code)]
@@ -114,8 +115,8 @@ pub struct Scene {
     last_id: u32,
     nodes: HashMap<NodeId, Node>,
     cameras: HashMap<NodeId, Camera>,
-    views: HashMap<NodeId, Box<dyn View>>,
-    geometries: HashMap<NodeId, Vec<Geometry>>,
+    renderables: HashMap<NodeId, Box<dyn Renderable>>,
+    views: HashMap<NodeId, View>,
     cache: Cache,
     clear_color: Color,
 }
@@ -140,8 +141,8 @@ impl Default for Scene {
             nodes,
             cache: Cache::new(),
             cameras: HashMap::new(),
+            renderables: HashMap::new(),
             views: HashMap::new(),
-            geometries: HashMap::new(),
             clear_color: Color::from_rgb(12, 12, 12),
         }
     }
@@ -158,15 +159,16 @@ impl Scene {
         self.last_id
     }
 
-    pub fn add_view(&mut self, parent_id: NodeId, view: Box<dyn View>) -> Option<NodeId> {
-        let id = NodeId::View(self.next_id());
+    pub fn add_renderable(&mut self, parent_id: NodeId, renderable: Box<dyn Renderable>) -> Option<NodeId> {
+        let id = self.next_id();
+        let node_id = NodeId::Renderable(id);
         match self.nodes.get_mut(&parent_id) {
             Some(parent) => {
-                parent.children.push(id);
-                self.nodes.insert(id, Node::with_kind_and_parent(NodeKind::View, Some(parent_id)));
-                self.geometries.insert(id, view.render());
-                self.views.insert(id, view);
-                Some(id)
+                parent.children.push(node_id);
+                self.nodes.insert(node_id, Node::with_kind_and_parent(NodeKind::Renderable, Some(parent_id)));
+                self.views.insert(node_id, renderable.render(ViewBuilder::with_id(id)));
+                self.renderables.insert(node_id, renderable);
+                Some(node_id)
             },
             None => None,
         }
@@ -191,10 +193,10 @@ impl Scene {
 
     pub fn render(&mut self, ctx: &mut Context) {
         let mut target = ctx.backend.display.draw();
-        // let mut picking_target_opt = picker.target(&display);
+
+        let mut picking_target_opt = ctx.picker.target(&ctx.backend.display);
         target.clear_color_and_depth(self.clear_color.into(), 1.0);
         ctx.backend.glyph_brush.draw_queued(&ctx.backend.display, &mut target);
-
 
         if self.nodes[&NodeId::Root].dirty {
             self.cache = Cache::new();
@@ -210,8 +212,9 @@ impl Scene {
                     NodeKind::Camera => {
                         transform = transform * self.cameras.get(&node_id).unwrap().matrix();
                     },
-                    NodeKind::View => {
-                        for geometry in self.geometries.get(&node_id).unwrap().iter() {
+                    NodeKind::Renderable => {
+                        let view = self.views.get(&node_id).unwrap();
+                        for geometry in view.geometries.iter() {
                             self.cache.add(
                                 ctx,
                                 transform * geometry.transform,
@@ -258,6 +261,9 @@ impl Scene {
                 &entry.indices,
             )
             .unwrap();
+            if let Some(picking_target) = picking_target_opt.as_mut() {
+                picking_target.draw(&vb, &ib, &ctx.resource_pack.get_shader(&ShaderId("picking")).program, &uniforms, &params).unwrap();
+            }
             match nb {
                 Some(normals) => {
                     target
@@ -272,7 +278,7 @@ impl Scene {
             }
         }
 
-
+        ctx.picker.commit(ctx.mouse.position);
         target.finish().unwrap();
     }
 }

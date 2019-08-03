@@ -20,18 +20,15 @@ use crate::{
 pub struct Engine<'a,S,A> {
     pub context: Context<'a>,
     pub stage_machine: StageMachine<S,A>,
-    pub picker: Picker,
     pub ui: Ui,
 	pub store: Store<S, A>,
 }
 
 impl<'a,S,A> Engine<'a,S,A> {
     pub fn new(ctx: Context<'a>, store: Store<S, A>) -> Result<Engine<'a, S, A>, Box<dyn Error>> {
-        let picker = Picker::new(&ctx.backend.display);
         Ok(Engine {
             stage_machine: StageMachine::default(),
             context: ctx,
-            picker,
             ui: Ui::default(),
 			store,
         })
@@ -65,6 +62,15 @@ impl<'a,S,A> Engine<'a,S,A> {
             ),
         );
 
+        self.context.resource_pack.register_shader(
+            ShaderId("picking"),
+            Shader::from_source(
+                &self.context.backend,
+                include_str!("../res/shaders/picking.vert"),
+                include_str!("../res/shaders/picking.frag"),
+            ),
+        );
+
         self.context.resource_pack.register_texture(
             TextureId("default"),
             Texture::from_raw(
@@ -75,7 +81,7 @@ impl<'a,S,A> Engine<'a,S,A> {
 
         self.stage_machine.push(&self.context, initial_state);
 
-        self.picker.initialize_picking_attachments(
+        self.context.picker.initialize_picking_attachments(
             &self.context.backend.display,
             (
                 self.context.settings.graphics.window_width,
@@ -116,11 +122,10 @@ impl<'a,S,A> Engine<'a,S,A> {
     fn update(&mut self) -> Transition<S,A> {
         let mut action = self.stage_machine.update(&self.context, &mut self.store);
 
-        let _picked_object = self.picker.get_picked_object();
-
+		if let Some(picked_object) = self.context.picker.get_picked_object() {
+			println!("picked {}", picked_object);
+		}
         self.stage_machine.render(&mut self.context);
-
-        self.picker.commit(self.context.mouse.position);
 
         for e in self.context.events().iter() {
             match e {
@@ -130,7 +135,7 @@ impl<'a,S,A> Engine<'a,S,A> {
                         width,
                         height,
                     }) => {
-                        self.picker.initialize_picking_attachments(
+                        self.context.picker.initialize_picking_attachments(
                             &self.context.backend.display,
                             (*width as u32, *height as u32),
                         );

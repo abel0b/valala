@@ -5,6 +5,7 @@ use crate::{
     texture::Texture,
     model::Model,
     clock::Clock,
+    picking::Picker,
 };
 use log::info;
 use glium::{
@@ -47,6 +48,7 @@ pub struct Context<'a> {
     pub mouse: Mouse,
     pub window: Window,
     pub clock: Clock,
+    pub picker: Picker,
 }
 
 impl<'a> GlBackend<'a> {
@@ -98,6 +100,7 @@ impl<'a> Context<'a> {
             width: settings.graphics.window_width,
             height: settings.graphics.window_height,
         };
+        let picker = Picker::new(&backend.display);
         Context {
             backend,
             settings,
@@ -105,6 +108,7 @@ impl<'a> Context<'a> {
             window,
             mouse: Mouse { position: None },
             clock: Clock::new(),
+            picker,
         }
     }
 

@@ -1,7 +1,7 @@
 use valala_engine::{
     geometry::{Geometry, GeometryBuilder},
     resource::{ShaderId},
-    view::View,
+    view::{View, ViewBuilder, Renderable},
 };
 use core::f32::consts::PI;
 
@@ -65,11 +65,9 @@ impl Tile {
     }
 }
 
-impl View for Tile {
-    fn render(&self) -> Vec<Geometry> {
-        let mut tile = GeometryBuilder::default();
-        let mut border = GeometryBuilder::default();
-        border.shader(ShaderId("color"));
+impl Renderable for Tile {
+    fn render(&self, mut view: ViewBuilder) -> View {
+        let tile = view.geometry();
         let color = if self.y == 0 {
             let a = (((self.q - self.r) % 3 + 3) % 3) as f32;
             (0.85+a*0.1, 0.85+a*0.1, 0.85+a*0.1, 0.85+a*0.1)
@@ -77,9 +75,7 @@ impl View for Tile {
         else {
             (0.5, 0.5, 0.5, 1.0)
         };
-
         tile.shader(ShaderId("color"));
-
         tile.vertex(
             (self.center.0, (self.y as f32) * Self::HEIGHT, self.center.1),
             color,
@@ -166,6 +162,8 @@ impl View for Tile {
 
         let color = (0.2,0.2,0.2,1.0);
 
+        let border = view.geometry();
+        border.shader(ShaderId("color"));
         border.vertex(
             (self.center.0, (self.y as f32) * Self::HEIGHT, self.center.1),
             color,
@@ -249,6 +247,6 @@ impl View for Tile {
         .line(5, 11)
         .line(6, 12);
 
-        vec![tile.build(), border.build()]
+        view.build()
     }
 }

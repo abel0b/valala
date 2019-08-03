@@ -37,6 +37,7 @@ impl Geometry {
 }
 
 pub struct GeometryBuilder {
+    id: u32,
     shader_id: ShaderId,
     texture_id: TextureId,
     model_id: Option<ModelId>,
@@ -44,12 +45,13 @@ pub struct GeometryBuilder {
     indices: Vec<u32>,
     normals: Option<Vec<Normal>>,
     primitive: PrimitiveType,
-    pub transform: Matrix4<f32>,
+    transform: Matrix4<f32>,
 }
 
 impl Default for GeometryBuilder {
     fn default() -> GeometryBuilder {
         GeometryBuilder {
+            id: 0,
             shader_id: ShaderId("default"),
             texture_id: TextureId("default"),
             model_id: None,
@@ -63,6 +65,17 @@ impl Default for GeometryBuilder {
 }
 
 impl GeometryBuilder {
+    pub fn new() -> GeometryBuilder {
+        Default::default()
+    }
+
+    pub fn with_id(id: u32) -> GeometryBuilder {
+        GeometryBuilder {
+            id,
+            ..Default::default()
+        }
+    }
+
     pub fn with_model_and_texture(model_id: ModelId, texture_id: TextureId) -> GeometryBuilder {
         GeometryBuilder {
             shader_id: ShaderId("model"),
@@ -105,7 +118,7 @@ impl GeometryBuilder {
     ) -> &mut GeometryBuilder {
 
         self.vertices.push(Vertex {
-            id: 0,
+            id: self.id,
             position,
             color,
             tex_coords,
@@ -147,16 +160,17 @@ impl GeometryBuilder {
         self
     }
 
-    pub fn build(self) -> Geometry {
+    pub fn build(&self) -> Geometry {
+        println!("{}", self.id);
         Geometry {
             shader_id: self.shader_id,
             texture_id: self.texture_id,
             shape: match self.model_id {
                 Some(model_id) => Shape::Model(model_id),
                 None => Shape::Mesh(Mesh {
-                    vertices: self.vertices,
-                    indices: self.indices,
-                    normals: self.normals,
+                    vertices: self.vertices.clone(),
+                    indices: self.indices.clone(),
+                    normals: self.normals.clone(),
                     primitive: self.primitive,
                 }),
             },

@@ -40,16 +40,10 @@ impl Picker {
         ))
     }
 
-    pub fn get_picked_object(&self) -> Option<(u16, u16)> {
-        match self.picking_pbo.read().map(|d| d[0]).unwrap() {
+    pub fn get_picked_object(&self) -> Option<u32> {
+        match self.picking_pbo.read().map(|d| d[0]).unwrap_or(0) {
             0 => None,
-            picked_id => Some({
-                let bytes = picked_id.to_be_bytes();
-                (
-                    u16::from_be_bytes([bytes[0], bytes[1]]),
-                    u16::from_be_bytes([bytes[2], bytes[3]]),
-                )
-            }),
+            picked_id => Some(picked_id),
         }
     }
 

@@ -25,14 +25,14 @@ impl Stage<State, Action> for Lobby {
             let r1 = std::cmp::max(-map_radius, -q - map_radius);
             let r2 = std::cmp::min(map_radius, -q + map_radius);
             for r in r1..=r2 {
-                let _tile = scene.add_view(camera, Box::new(Tile::new(q, r, 0)));
+                let _tile = scene.add_renderable(camera, Box::new(Tile::new(q, r, 0)));
                 if rng.gen_range(0.0, 10.0) < 2.0 {
-                    let _tile = scene.add_view(camera, Box::new(Tile::new(q, r, 1)));
+                    let _tile = scene.add_renderable(camera, Box::new(Tile::new(q, r, 1)));
                 }
             }
         }
 
-        let _character = scene.add_view(camera, Box::new(Character::new()));
+        let _character = scene.add_renderable(camera, Box::new(Character::new()));
     }
 
     fn frame(&mut self, _ctx: &Context, _scene: &mut Scene, store: &mut Store<State,Action>) -> Transition<State,Action> {
