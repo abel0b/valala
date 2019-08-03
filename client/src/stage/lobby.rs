@@ -17,7 +17,6 @@ pub struct Lobby;
 
 impl Stage<State, Action> for Lobby {
     fn enter(&mut self, ctx: &Context, scene: &mut Scene) {
-        // let map = Map::new_hexagonal(scene);
         let camera = scene.add_camera(NodeId::Root, Camera::isometric(ctx.window.height as f32 / ctx.window.width as f32)).unwrap();
 
         let mut rng = rand::thread_rng();
@@ -37,7 +36,7 @@ impl Stage<State, Action> for Lobby {
     }
 
     fn frame(&mut self, _ctx: &Context, _scene: &mut Scene, store: &mut Store<State,Action>) -> Transition<State,Action> {
-        store.dispatch(Action::Oof);
+        // store.dispatch(Action::Oof);
         Transition::Continue
     }
 }

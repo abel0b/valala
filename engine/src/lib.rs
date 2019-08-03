@@ -18,3 +18,4 @@ pub mod log;
 pub mod math;
 pub mod store;
 pub mod clock;
+pub mod color;

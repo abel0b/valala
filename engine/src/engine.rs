@@ -1,7 +1,6 @@
 use std::boxed::Box;
 use std::error::Error;
 use std::result::Result;
-use std::time::Instant;
 use glium_glyph::glyph_brush::{
 	rusttype::Scale, Section,
 };

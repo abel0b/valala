@@ -10,11 +10,10 @@ use crate::{
     mesh::{Vertex, Normal, PrimitiveType},
     resource::{ShaderId, TextureId},
     view::View,
+    color::Color,
 };
 
 // TODO: remove unwraps
-
-const CLEAR_COLOR: (f32, f32, f32, f32) = (0.05, 0.05, 0.05, 1.0);
 
 pub type Entity = u16;
 
@@ -118,6 +117,7 @@ pub struct Scene {
     views: HashMap<NodeId, Box<dyn View>>,
     geometries: HashMap<NodeId, Vec<Geometry>>,
     cache: Cache,
+    clear_color: Color,
 }
 
 impl Node {
@@ -142,6 +142,7 @@ impl Default for Scene {
             cameras: HashMap::new(),
             views: HashMap::new(),
             geometries: HashMap::new(),
+            clear_color: Color::from_rgb(12, 12, 12),
         }
     }
 }
@@ -184,10 +185,14 @@ impl Scene {
         }
     }
 
+    pub fn set_clear_color(&mut self, color: Color) {
+        self.clear_color = color;
+    }
+
     pub fn render(&mut self, ctx: &mut Context) {
         let mut target = ctx.backend.display.draw();
         // let mut picking_target_opt = picker.target(&display);
-        target.clear_color_and_depth(CLEAR_COLOR, 1.0);
+        target.clear_color_and_depth(self.clear_color.into(), 1.0);
         ctx.backend.glyph_brush.draw_queued(&ctx.backend.display, &mut target);
 
 
