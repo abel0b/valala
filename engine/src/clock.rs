@@ -6,13 +6,19 @@ pub struct Clock {
     pub fps: u128,
 }
 
-impl Clock {
-    pub fn new() -> Clock {
+impl Default for Clock {
+    fn default() -> Clock {
         Clock {
             initial_instant: Instant::now(),
             last_instant: Instant::now(),
             fps: 0,
         }
+    }
+}
+
+impl Clock {
+    pub fn new() -> Clock {
+        Default::default()
     }
 
     pub fn tick(&mut self) {

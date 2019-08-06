@@ -1,6 +1,4 @@
 #[derive(Default)]
 pub struct Map {}
 
-impl Map {
-
-}
+impl Map {}

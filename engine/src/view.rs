@@ -1,7 +1,12 @@
-use crate::{geometry::{Geometry, GeometryBuilder}};
+use crate::geometry::{Geometry, GeometryBuilder};
 
 pub trait Renderable {
     fn render(&self, view: ViewBuilder) -> View;
+}
+
+pub trait Hoverable<A> {
+    fn hover_enter(&self) -> A;
+    fn hover_leave(&self) -> A;
 }
 
 #[derive(Default)]
@@ -17,7 +22,7 @@ impl View {
 
 pub struct ViewBuilder {
     id: u32,
-    geometries: Vec<GeometryBuilder>
+    geometries: Vec<GeometryBuilder>,
 }
 
 impl ViewBuilder {

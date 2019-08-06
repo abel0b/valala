@@ -1,7 +1,7 @@
 #![cfg_attr(feature = "strict", deny(warnings))]
 
-mod store;
 mod stage;
+mod store;
 mod view;
 
 use crate::stage::Title;

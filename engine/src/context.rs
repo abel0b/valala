@@ -1,26 +1,24 @@
 use crate::{
-    resource::{ResourcePack, ShaderId, TextureId, ModelId},
+    clock::Clock,
+    model::Model,
+    picking::Picker,
+    resource::{ModelId, ResourcePack, ShaderId, TextureId},
     settings::Settings,
     shader::Shader,
     texture::Texture,
-    model::Model,
-    clock::Clock,
-    picking::Picker,
 };
-use log::info;
 use glium::{
     glutin::{dpi::LogicalSize, ContextBuilder, Event, WindowBuilder},
     Display,
 };
+use glium_glyph::glyph_brush::rusttype::Font;
+use glium_glyph::GlyphBrush;
+use log::info;
 use std::boxed::Box;
 use std::error::Error;
 use std::f64;
 use std::path::Path;
 use std::result::Result;
-use glium_glyph::GlyphBrush;
-use glium_glyph::glyph_brush::{
-	rusttype::Font,
-};
 
 const TEXTURES_DIRECTORY: &str = "res/textures";
 const SHADERS_DIRECTORY: &str = "res/shaders";
@@ -69,18 +67,9 @@ impl<'a> GlBackend<'a> {
         let fonts = vec![Font::from_bytes(consolas).unwrap()];
 
         let glyph_brush = GlyphBrush::new(&display, fonts);
-        info!(
-            "GL Version {}",
-            display.get_opengl_version_string()
-        );
-        info!(
-            "GL Implementation {}",
-            display.get_opengl_vendor_string()
-        );
-        info!(
-            "GL Renderer {}",
-            display.get_opengl_renderer_string()
-        );
+        info!("GL Version {}", display.get_opengl_version_string());
+        info!("GL Implementation {}", display.get_opengl_vendor_string());
+        info!("GL Renderer {}", display.get_opengl_renderer_string());
         Ok(GlBackend {
             event_loop,
             display,

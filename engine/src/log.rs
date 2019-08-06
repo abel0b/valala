@@ -1,15 +1,8 @@
-use log::{
-    Level,
-    Record,
-    Metadata,
-    Log,
-};
 use ansi_term::{
+    Colour::{Blue, Green, Red, Yellow},
     Style,
-    Colour::{
-        Red, Yellow, Blue, Green
-    },
 };
+use log::{Level, Log, Metadata, Record};
 
 pub static LOGGER: Logger = Logger;
 

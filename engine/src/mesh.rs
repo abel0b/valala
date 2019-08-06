@@ -23,53 +23,29 @@ pub enum PrimitiveType {
     TriangleStrip,
     TriangleStripAdjacency,
     TriangleFan,
-    Patches {
-        vertices_per_patch: u16,
-    },
+    Patches { vertices_per_patch: u16 },
 }
 
 impl From<&PrimitiveType> for glium::index::PrimitiveType {
     fn from(item: &PrimitiveType) -> Self {
         match item {
-            PrimitiveType::Points => {
-                glium::index::PrimitiveType::Points
-            },
-            PrimitiveType::LinesList => {
-                glium::index::PrimitiveType::LinesList
-            },
-            PrimitiveType::LinesListAdjacency => {
-                glium::index::PrimitiveType::LinesListAdjacency
-            },
-            PrimitiveType::LineStrip => {
-                glium::index::PrimitiveType::LineStrip
-            },
-            PrimitiveType::LineStripAdjacency => {
-                glium::index::PrimitiveType::LineStripAdjacency
-            },
-            PrimitiveType::LineLoop => {
-                glium::index::PrimitiveType::LineLoop
-            },
-            PrimitiveType::TrianglesList => {
-                glium::index::PrimitiveType::TrianglesList
-            },
+            PrimitiveType::Points => glium::index::PrimitiveType::Points,
+            PrimitiveType::LinesList => glium::index::PrimitiveType::LinesList,
+            PrimitiveType::LinesListAdjacency => glium::index::PrimitiveType::LinesListAdjacency,
+            PrimitiveType::LineStrip => glium::index::PrimitiveType::LineStrip,
+            PrimitiveType::LineStripAdjacency => glium::index::PrimitiveType::LineStripAdjacency,
+            PrimitiveType::LineLoop => glium::index::PrimitiveType::LineLoop,
+            PrimitiveType::TrianglesList => glium::index::PrimitiveType::TrianglesList,
             PrimitiveType::TrianglesListAdjacency => {
                 glium::index::PrimitiveType::TrianglesListAdjacency
-            },
-            PrimitiveType::TriangleStrip => {
-                glium::index::PrimitiveType::TriangleStrip
-            },
+            }
+            PrimitiveType::TriangleStrip => glium::index::PrimitiveType::TriangleStrip,
             PrimitiveType::TriangleStripAdjacency => {
                 glium::index::PrimitiveType::TriangleStripAdjacency
-            },
-            PrimitiveType::TriangleFan => {
-                glium::index::PrimitiveType::TriangleFan
-            },
-            PrimitiveType::Patches {
-                vertices_per_patch,
-            } => {
-                glium::index::PrimitiveType::Patches {
-                    vertices_per_patch: *vertices_per_patch,
-                }
+            }
+            PrimitiveType::TriangleFan => glium::index::PrimitiveType::TriangleFan,
+            PrimitiveType::Patches { vertices_per_patch } => glium::index::PrimitiveType::Patches {
+                vertices_per_patch: *vertices_per_patch,
             },
         }
     }

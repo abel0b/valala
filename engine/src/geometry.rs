@@ -1,9 +1,9 @@
 use crate::{
-    mesh::{Mesh, Normal, Vertex, PrimitiveType},
+    mesh::{Mesh, Normal, PrimitiveType, Vertex},
     resource::{ModelId, ShaderId, TextureId},
 };
-use cgmath::{Rad, Matrix4};
 use cgmath::num_traits::identities::One;
+use cgmath::{Matrix4, Rad};
 
 pub enum Shape {
     Model(ModelId),
@@ -116,7 +116,6 @@ impl GeometryBuilder {
         color: (f32, f32, f32, f32),
         tex_coords: (f32, f32),
     ) -> &mut GeometryBuilder {
-
         self.vertices.push(Vertex {
             id: self.id,
             position,
@@ -161,7 +160,6 @@ impl GeometryBuilder {
     }
 
     pub fn build(&self) -> Geometry {
-        println!("{}", self.id);
         Geometry {
             shader_id: self.shader_id,
             texture_id: self.texture_id,

@@ -7,16 +7,17 @@ pub struct Color {
 
 impl Color {
     pub fn from_rgb(red: u8, green: u8, blue: u8) -> Color {
-        Color {
-            red,
-            green,
-            blue,
-        }
+        Color { red, green, blue }
     }
 }
 
 impl Into<(f32, f32, f32, f32)> for Color {
     fn into(self) -> (f32, f32, f32, f32) {
-        (self.red as f32 / 256.0, self.green as f32 / 256.0, self.blue as f32 / 256.0, 1.0)
+        (
+            f32::from(self.red) / 256.0,
+            f32::from(self.green) / 256.0,
+            f32::from(self.blue) / 256.0,
+            1.0,
+        )
     }
 }

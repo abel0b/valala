@@ -1,37 +1,24 @@
+mod character;
 mod map;
+mod state;
+mod tile;
 
-pub use map::Map;
+pub use character::Character;
+pub use state::State;
+pub use tile::Tile;
 use valala_engine::store::Store;
 
-pub struct State {
-
-}
-
-impl Default for State {
-    fn default() -> State {
-        State {
-
-        }
-    }
-}
-
-impl State {
-    pub fn new() -> State {
-        Default::default()
-    }
-}
-
 pub enum Action {
-    Oof,
-    CharacterEntered(u32),
+    Nop,
+    HoverEnterTile(i32, i32, i32),
 }
 
-fn reducer(state: &mut State, action: Action) {
+fn reducer(_state: &mut State, action: Action) {
     match action {
-        Oof => {
-            println!("oof");
-        },
-        _ => {}
+        Action::HoverEnterTile(q, r, y) => {
+            println!("tile {:?}", (q, r, y));
+        }
+        Action::Nop => {}
     }
 }
 

@@ -1,48 +1,12 @@
+use crate::store::Character;
 use valala_engine::{
-    resource::{TextureId, ModelId, ShaderId},
+    resource::{ModelId, ShaderId, TextureId},
     view::{Renderable, View, ViewBuilder},
-    math::Deg,
 };
-
-#[derive(Copy, Clone)]
-enum Orientation {
-    Zero = 0,
-    One = 1,
-    Two = 2,
-    Three = 3,
-    Four = 4,
-    Five = 5,
-}
-
-impl Orientation {
-    pub fn angle(self) -> Deg<f32> {
-        Deg((self as i32 as f32) * 60.0)
-    }
-}
-
-pub struct Character {
-    orientation: Orientation,
-    scale: f32,
-}
-
-impl Default for Character {
-    fn default() -> Character {
-        Character {
-            orientation: Orientation::One,
-            scale: 1.0,
-        }
-    }
-}
-
-impl Character {
-    pub fn new() -> Character {
-        Default::default()
-    }
-}
 
 impl Renderable for Character {
     fn render(&self, mut view: ViewBuilder) -> View {
-        let mut character = view.geometry();
+        let character = view.geometry();
         character
             .model(ModelId("character"))
             .shader(ShaderId("model"))
@@ -53,3 +17,9 @@ impl Renderable for Character {
         view.build()
     }
 }
+
+// impl Hoverable<Action> for Character {
+//     fn hover(&self) -> Action {
+//         Action::HoverCharacter(42)
+//     }
+// }
