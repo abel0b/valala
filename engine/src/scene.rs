@@ -21,6 +21,7 @@ pub enum NodeId {
     Root,
     Camera(u32),
     Entity(u32),
+    Group(u32),
 }
 
 enum NodeKind {
@@ -57,10 +58,15 @@ impl Cache {
         self.entries.iter()
     }
 
-    pub fn add(&mut self, context: &Context, transform: cgmath::Matrix4<f32>, geometry: &Geometry) {
+    pub fn add<S, A>(
+        &mut self,
+        store: &Store<S, A>,
+        transform: cgmath::Matrix4<f32>,
+        geometry: &Geometry,
+    ) {
         let mesh = match &geometry.shape {
             Shape::Mesh(mesh) => mesh,
-            Shape::Model(model_id) => &context.resource_pack.get_model(&model_id).mesh,
+            Shape::Model(model_id) => &store.context.resource_pack.get_model(&model_id).mesh,
         };
         match self.entries.get_mut(&(
             geometry.shader_id,
@@ -113,11 +119,11 @@ impl Default for Cache {
     }
 }
 
-pub struct Scene<A> {
+pub struct Scene<S, A> {
     last_id: u32,
     nodes: HashMap<NodeId, Node>,
     cameras: HashMap<NodeId, Camera>,
-    renderables: HashMap<NodeId, Rc<dyn Renderable>>,
+    renderables: HashMap<NodeId, Rc<dyn Renderable<S, A>>>,
     hoverables: HashMap<NodeId, Rc<dyn Hoverable<A>>>,
     views: HashMap<NodeId, View>,
     cache: Cache,
@@ -135,8 +141,8 @@ impl Node {
     }
 }
 
-impl<A> Default for Scene<A> {
-    fn default() -> Scene<A> {
+impl<S, A> Default for Scene<S, A> {
+    fn default() -> Scene<S, A> {
         let mut nodes = HashMap::new();
         nodes.insert(
             NodeId::Root,
@@ -155,8 +161,8 @@ impl<A> Default for Scene<A> {
     }
 }
 
-impl<A> Scene<A> {
-    pub fn new() -> Scene<A> {
+impl<S, A> Scene<S, A> {
+    pub fn new() -> Scene<S, A> {
         Default::default()
     }
 
@@ -185,13 +191,11 @@ impl<A> Scene<A> {
     pub fn set_renderable(
         &mut self,
         node_id: NodeId,
-        renderable: Rc<dyn Renderable>,
+        renderable: Rc<dyn Renderable<S, A>>,
     ) -> Option<NodeId> {
         match node_id {
             NodeId::Entity(id) => match self.nodes.get_mut(&node_id) {
                 Some(_) => {
-                    self.views
-                        .insert(node_id, renderable.render(ViewBuilder::with_id(id)));
                     self.renderables.insert(node_id, renderable);
                     Some(node_id)
                 }
@@ -234,35 +238,52 @@ impl<A> Scene<A> {
         }
     }
 
+    pub fn add_group(&mut self, parent_id: NodeId) -> Option<NodeId> {
+        let id = NodeId::Group(self.next_id());
+        match self.nodes.get_mut(&parent_id) {
+            Some(parent) => {
+                parent.children.push(id);
+                self.nodes.insert(
+                    id,
+                    Node::with_kind_and_parent(NodeKind::Group, Some(parent_id)),
+                );
+                Some(id)
+            }
+            None => None,
+        }
+    }
+
     pub fn set_clear_color(&mut self, color: Color) {
         self.clear_color = color;
     }
 
-    pub fn render<S>(&mut self, ctx: &mut Context, store: &mut Store<S, A>) {
-        let mut target = ctx.backend.display.draw();
+    pub fn render(&mut self, store: &mut Store<S, A>) {
+        let mut target = store.context.backend.display.draw();
 
-        for event in ctx.picker.update().iter() {
+        for event in store.context.picker.update().iter() {
             match event {
                 PickingEvent::HoverEnter(node_id) => {
-                    if let Some(hoverable) = self.hoverables.get(node_id) {
-                        store.dispatch(hoverable.hover_enter());
-                    }
+                    let hoverable = self.hoverables.get(node_id).unwrap();
+                    let action = hoverable.hover_enter(*node_id);
+                    store.dispatch(self, action);
                 }
                 PickingEvent::HoverLeave(node_id) => {
-                    if let Some(hoverable) = self.hoverables.get(node_id) {
-                        store.dispatch(hoverable.hover_leave());
-                    }
+                    let hoverable = self.hoverables.get(node_id).unwrap();
+                    let action = hoverable.hover_leave(*node_id);
+                    store.dispatch(self, action);
                 }
                 PickingEvent::MouseUp(_node_id) => {}
                 PickingEvent::MouseDown(_node_id) => {}
             }
         }
 
-        let mut picking_target_opt = ctx.picker.target(&ctx.backend.display);
+        let mut picking_target_opt = store.context.picker.target(&store.context.backend.display);
         target.clear_color_and_depth(self.clear_color.into(), 1.0);
-        ctx.backend
+        store
+            .context
+            .backend
             .glyph_brush
-            .draw_queued(&ctx.backend.display, &mut target);
+            .draw_queued(&store.context.backend.display, &mut target);
 
         if self.nodes[&NodeId::Root].dirty {
             self.cache = Cache::new();
@@ -271,7 +292,7 @@ impl<A> Scene<A> {
 
             while !stack.is_empty() {
                 let node_id = stack.pop().unwrap();
-                let node = &self.nodes.get(&node_id).unwrap();
+                let node: &Node = &self.nodes.get(&node_id).unwrap();
                 let mut transform = transforms.pop().unwrap();
 
                 match node.kind {
@@ -279,12 +300,29 @@ impl<A> Scene<A> {
                         transform = transform * self.cameras.get(&node_id).unwrap().matrix();
                     }
                     NodeKind::Entity => {
+                        if let Some(renderable) = self.renderables.get(&node_id) {
+                            self.views
+                                .insert(node_id, renderable.render(store, node_id));
+                        }
                         if let Some(view) = self.views.get(&node_id) {
                             for geometry in view.geometries.iter() {
                                 self.cache
-                                    .add(ctx, transform * geometry.transform, &geometry);
+                                    .add(store, transform * geometry.transform, &geometry);
                             }
                         }
+                        // if let Some(renderable) = self.renderables.get(&node_id) {
+                        //     let view = match self.views.get(&node_id) {
+                        //         Some(view) => view,
+                        //         None => {
+                        //             self.views.insert(node_id, renderable.render(ViewBuilder::with_id(self.next_id()), &store.state));
+                        //             self.views.get(&node_id).unwrap()
+                        //         }
+                        //     };
+                        //     for geometry in view.geometries.iter() {
+                        //         self.cache
+                        //             .add(ctx, transform * geometry.transform, &geometry);
+                        //     }
+                        // }
                     }
                     NodeKind::Group => {}
                 }
@@ -299,7 +337,7 @@ impl<A> Scene<A> {
         for ((shader_id, texture_id, primitive, _has_normals), entry) in self.cache.iter() {
             let uniforms = glium::uniform! {
                 u_light: [-1.0, 0.4, 0.9f32],
-                tex: &ctx.resource_pack.get_texture(&texture_id).texture,
+                tex: &store.context.resource_pack.get_texture(&texture_id).texture,
                 transform: cgmath::conv::array4x4(entry.transform),
             };
             let params = glium::DrawParameters {
@@ -310,24 +348,31 @@ impl<A> Scene<A> {
                 },
                 ..Default::default()
             };
-            let shader = ctx.resource_pack.get_shader(&shader_id);
+            let shader = store.context.resource_pack.get_shader(&shader_id);
             let vb: glium::VertexBuffer<Vertex> =
-                glium::VertexBuffer::new(&ctx.backend.display, &entry.vertices).unwrap();
+                glium::VertexBuffer::new(&store.context.backend.display, &entry.vertices).unwrap();
             let nb: Option<glium::VertexBuffer<Normal>> = match &entry.normals {
-                Some(normals) => {
-                    Some(glium::VertexBuffer::new(&ctx.backend.display, &normals).unwrap())
-                }
+                Some(normals) => Some(
+                    glium::VertexBuffer::new(&store.context.backend.display, &normals).unwrap(),
+                ),
                 None => None,
             };
-            let ib: glium::IndexBuffer<u32> =
-                glium::IndexBuffer::new(&ctx.backend.display, primitive.into(), &entry.indices)
-                    .unwrap();
+            let ib: glium::IndexBuffer<u32> = glium::IndexBuffer::new(
+                &store.context.backend.display,
+                primitive.into(),
+                &entry.indices,
+            )
+            .unwrap();
             if let Some(picking_target) = picking_target_opt.as_mut() {
                 picking_target
                     .draw(
                         &vb,
                         &ib,
-                        &ctx.resource_pack.get_shader(&ShaderId("picking")).program,
+                        &store
+                            .context
+                            .resource_pack
+                            .get_shader(&ShaderId("picking"))
+                            .program,
                         &uniforms,
                         &params,
                     )
@@ -347,7 +392,7 @@ impl<A> Scene<A> {
             }
         }
 
-        ctx.picker.commit(ctx.mouse.position);
+        store.context.picker.commit(store.context.mouse.position);
         target.finish().unwrap();
     }
 }

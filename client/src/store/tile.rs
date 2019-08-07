@@ -1,6 +1,9 @@
 use core::f32::consts::PI;
+use valala_engine::scene::NodeId;
 
 pub struct Tile {
+    pub entity: NodeId,
+    pub hovered: bool,
     pub q: i32,
     pub r: i32,
     pub y: i32,
@@ -14,7 +17,7 @@ impl Tile {
     pub const SIZE: (f32, f32) = (1.0, 1.0);
     pub const HEIGHT: f32 = 0.5;
 
-    pub fn new(q: i32, r: i32, y: i32) -> Tile {
+    pub fn new(entity: NodeId, q: i32, r: i32, y: i32) -> Tile {
         let center = Self::center(q, r);
         let corners_down = [
             Self::corner(center, 0, (y as f32) * Self::HEIGHT),
@@ -33,6 +36,8 @@ impl Tile {
             Self::corner(center, 5, (y as f32) * Self::HEIGHT + Self::HEIGHT),
         ];
         Tile {
+            entity,
+            hovered: false,
             q,
             r,
             y,

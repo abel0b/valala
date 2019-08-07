@@ -1,5 +1,5 @@
 use rand::Rng;
-use valala_engine::math::Deg;
+use valala_engine::{math::Deg, scene::NodeId};
 
 #[derive(Copy, Clone)]
 pub enum Orientation {
@@ -37,21 +37,17 @@ impl Orientation {
 }
 
 pub struct Character {
+    pub entity: NodeId,
     pub orientation: Orientation,
     pub scale: f32,
 }
 
-impl Default for Character {
-    fn default() -> Character {
+impl Character {
+    pub fn new(entity: NodeId) -> Character {
         Character {
+            entity,
             orientation: Orientation::random(),
             scale: 1.0,
         }
-    }
-}
-
-impl Character {
-    pub fn new() -> Character {
-        Default::default()
     }
 }

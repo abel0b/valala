@@ -90,7 +90,10 @@ impl Picker {
                         events.push(PickingEvent::HoverLeave(previous_id));
                         events.push(PickingEvent::HoverEnter(node_id));
                     }
+                } else {
+                    events.push(PickingEvent::HoverEnter(node_id));
                 }
+
                 Some(node_id)
             }
         };

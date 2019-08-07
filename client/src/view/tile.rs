@@ -1,23 +1,36 @@
-use crate::store::{Action, Tile};
+use crate::store::{Action, State, Tile};
 use valala_engine::{
     resource::ShaderId,
+    scene::NodeId,
+    store::Store,
     view::{Hoverable, Renderable, View, ViewBuilder},
 };
 
-impl Hoverable<Action> for Tile {
-    fn hover_enter(&self) -> Action {
-        Action::HoverEnterTile(self.q, self.r, self.y)
+pub struct TileEntity;
+
+impl Hoverable<Action> for TileEntity {
+    fn hover_enter(&self, node: NodeId) -> Action {
+        Action::HoverEnterTile(node)
     }
-    fn hover_leave(&self) -> Action {
-        Action::Nop
+    fn hover_leave(&self, node: NodeId) -> Action {
+        Action::HoverLeaveTile(node)
     }
 }
 
-impl Renderable for Tile {
-    fn render(&self, mut view: ViewBuilder) -> View {
+impl Renderable<State, Action> for TileEntity {
+    fn render(&self, store: &Store<State, Action>, node: NodeId) -> View {
+        let mut view = ViewBuilder::from_node(node);
+        let state = store
+            .state
+            .tiles
+            .values()
+            .find(|t| t.entity == node)
+            .unwrap();
         let tile = view.geometry();
-        let color = if self.y == 0 {
-            let a = (((self.q - self.r) % 3 + 3) % 3) as f32;
+        let color = if state.hovered {
+            (0.1, 0.8, 0.1, 1.0)
+        } else if state.y == 0 {
+            let a = (((state.q - state.r) % 3 + 3) % 3) as f32;
             (
                 0.85 + a * 0.1,
                 0.85 + a * 0.1,
@@ -29,22 +42,26 @@ impl Renderable for Tile {
         };
         tile.shader(ShaderId("color"));
         tile.vertex(
-            (self.center.0, (self.y as f32) * Self::HEIGHT, self.center.1),
+            (
+                state.center.0,
+                (state.y as f32) * Tile::HEIGHT,
+                state.center.1,
+            ),
             color,
             (0.5, 0.5),
         )
-        .vertex(self.corners_up[0], color, (0.0, 0.5))
-        .vertex(self.corners_up[1], color, (0.333_333, 0.0))
-        .vertex(self.corners_up[2], color, (0.666_666, 0.0))
-        .vertex(self.corners_up[3], color, (1.0, 0.5))
-        .vertex(self.corners_up[4], color, (0.666_666, 1.0))
-        .vertex(self.corners_up[5], color, (0.333_333, 1.0))
-        .vertex(self.corners_down[0], color, (0.0, 0.5))
-        .vertex(self.corners_down[1], color, (0.333_333, 0.0))
-        .vertex(self.corners_down[2], color, (0.666_666, 0.0))
-        .vertex(self.corners_down[3], color, (1.0, 0.5))
-        .vertex(self.corners_down[4], color, (0.666_666, 1.0))
-        .vertex(self.corners_down[5], color, (0.333_333, 1.0))
+        .vertex(state.corners_up[0], color, (0.0, 0.5))
+        .vertex(state.corners_up[1], color, (0.333_333, 0.0))
+        .vertex(state.corners_up[2], color, (0.666_666, 0.0))
+        .vertex(state.corners_up[3], color, (1.0, 0.5))
+        .vertex(state.corners_up[4], color, (0.666_666, 1.0))
+        .vertex(state.corners_up[5], color, (0.333_333, 1.0))
+        .vertex(state.corners_down[0], color, (0.0, 0.5))
+        .vertex(state.corners_down[1], color, (0.333_333, 0.0))
+        .vertex(state.corners_down[2], color, (0.666_666, 0.0))
+        .vertex(state.corners_down[3], color, (1.0, 0.5))
+        .vertex(state.corners_down[4], color, (0.666_666, 1.0))
+        .vertex(state.corners_down[5], color, (0.333_333, 1.0))
         .triangle(0, 1, 2)
         .triangle(0, 2, 3)
         .triangle(0, 3, 4)
@@ -70,22 +87,26 @@ impl Renderable for Tile {
         border.shader(ShaderId("color"));
         border
             .vertex(
-                (self.center.0, (self.y as f32) * Self::HEIGHT, self.center.1),
+                (
+                    state.center.0,
+                    (state.y as f32) * Tile::HEIGHT,
+                    state.center.1,
+                ),
                 color,
                 (0.5, 0.5),
             )
-            .vertex(self.corners_up[0], color, (0.0, 0.5))
-            .vertex(self.corners_up[1], color, (0.333_333, 0.0))
-            .vertex(self.corners_up[2], color, (0.666_666, 0.0))
-            .vertex(self.corners_up[3], color, (1.0, 0.5))
-            .vertex(self.corners_up[4], color, (0.666_666, 1.0))
-            .vertex(self.corners_up[5], color, (0.333_333, 1.0))
-            .vertex(self.corners_down[0], color, (0.0, 0.5))
-            .vertex(self.corners_down[1], color, (0.333_333, 0.0))
-            .vertex(self.corners_down[2], color, (0.666_666, 0.0))
-            .vertex(self.corners_down[3], color, (1.0, 0.5))
-            .vertex(self.corners_down[4], color, (0.666_666, 1.0))
-            .vertex(self.corners_down[5], color, (0.333_333, 1.0))
+            .vertex(state.corners_up[0], color, (0.0, 0.5))
+            .vertex(state.corners_up[1], color, (0.333_333, 0.0))
+            .vertex(state.corners_up[2], color, (0.666_666, 0.0))
+            .vertex(state.corners_up[3], color, (1.0, 0.5))
+            .vertex(state.corners_up[4], color, (0.666_666, 1.0))
+            .vertex(state.corners_up[5], color, (0.333_333, 1.0))
+            .vertex(state.corners_down[0], color, (0.0, 0.5))
+            .vertex(state.corners_down[1], color, (0.333_333, 0.0))
+            .vertex(state.corners_down[2], color, (0.666_666, 0.0))
+            .vertex(state.corners_down[3], color, (1.0, 0.5))
+            .vertex(state.corners_down[4], color, (0.666_666, 1.0))
+            .vertex(state.corners_down[5], color, (0.333_333, 1.0))
             .line(1, 2)
             .line(2, 3)
             .line(3, 4)

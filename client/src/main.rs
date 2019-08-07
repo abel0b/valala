@@ -5,11 +5,13 @@ mod store;
 mod view;
 
 use crate::stage::Title;
+use crate::store::{reducer, State};
 use clap::App;
 use std::boxed::Box;
 use std::error::Error;
 use std::result::Result;
 use valala_engine::prelude::{initialize, Context, Engine, ResourcePack, Settings};
+use valala_engine::store::Store;
 
 fn main() -> Result<(), Box<dyn Error>> {
     initialize();
@@ -36,9 +38,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         context
     };
 
-    let store = store::create();
+    let store = Store::new(context, State::new(), reducer);
 
-    let mut engine = Engine::new(context, store)?;
+    let mut engine = Engine::new(store)?;
 
     engine.run(Box::new(Title));
 
