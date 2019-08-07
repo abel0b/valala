@@ -87,7 +87,7 @@ impl Picker {
                     events.push(PickingEvent::HoverLeave(node));
                 }
                 None
-            },
+            }
             id => {
                 let node_id = NodeId::Entity(id);
                 if let Some(previous_id) = self.entity {

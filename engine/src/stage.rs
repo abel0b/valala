@@ -1,4 +1,4 @@
-use crate::{context::Context, scene::Scene, store::Store};
+use crate::{scene::Scene, store::Store};
 
 pub enum Transition<S, A> {
     Push(Box<dyn Stage<S, A>>),

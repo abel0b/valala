@@ -1,13 +1,12 @@
 use crate::{
     camera::Camera,
     color::Color,
-    context::Context,
     geometry::{Geometry, Shape},
     mesh::{Normal, PrimitiveType, Vertex},
     picking::PickingEvent,
     resource::{ShaderId, TextureId},
     store::Store,
-    view::{Hoverable, Renderable, View, ViewBuilder},
+    view::{Hoverable, Renderable, View},
 };
 use cgmath::num_traits::identities::One;
 use cgmath::Matrix4;
@@ -194,7 +193,7 @@ impl<S, A> Scene<S, A> {
         renderable: Rc<dyn Renderable<S, A>>,
     ) -> Option<NodeId> {
         match node_id {
-            NodeId::Entity(id) => match self.nodes.get_mut(&node_id) {
+            NodeId::Entity(_id) => match self.nodes.get_mut(&node_id) {
                 Some(_) => {
                     self.renderables.insert(node_id, renderable);
                     Some(node_id)
@@ -310,19 +309,6 @@ impl<S, A> Scene<S, A> {
                                     .add(store, transform * geometry.transform, &geometry);
                             }
                         }
-                        // if let Some(renderable) = self.renderables.get(&node_id) {
-                        //     let view = match self.views.get(&node_id) {
-                        //         Some(view) => view,
-                        //         None => {
-                        //             self.views.insert(node_id, renderable.render(ViewBuilder::with_id(self.next_id()), &store.state));
-                        //             self.views.get(&node_id).unwrap()
-                        //         }
-                        //     };
-                        //     for geometry in view.geometries.iter() {
-                        //         self.cache
-                        //             .add(ctx, transform * geometry.transform, &geometry);
-                        //     }
-                        // }
                     }
                     NodeKind::Group => {}
                 }
