@@ -82,7 +82,12 @@ impl Picker {
     pub fn update(&mut self) -> Vec<PickingEvent> {
         let mut events = Vec::new();
         self.entity = match self.picking_pbo.read().map(|d| d[0]).unwrap_or(0) {
-            0 => None,
+            0 => {
+                if let Some(node) = self.entity {
+                    events.push(PickingEvent::HoverLeave(node));
+                }
+                None
+            },
             id => {
                 let node_id = NodeId::Entity(id);
                 if let Some(previous_id) = self.entity {
