@@ -1,14 +1,7 @@
-use std::path::Path;
 use log::info;
+use std::path::Path;
 
-use crate::{
-    mesh::{
-        PrimitiveType,
-        Mesh,
-        Vertex,
-        Normal,
-    },
-};
+use crate::mesh::{Mesh, Normal, PrimitiveType, Vertex};
 
 pub struct Model {
     pub mesh: Mesh,
@@ -55,7 +48,7 @@ impl Model {
                         mesh.positions[3 * v + 2],
                     ),
                     color: (1.0, 0.0, 0.0, 1.0),
-                    tex_coords: (mesh.texcoords[2*v], mesh.texcoords[2*v+1]),
+                    tex_coords: (mesh.texcoords[2 * v], mesh.texcoords[2 * v + 1]),
                 });
             }
         }
@@ -93,7 +86,7 @@ impl Model {
                 normals: Some(normals),
                 indices,
                 primitive: PrimitiveType::TrianglesList,
-            }
+            },
         }
     }
 }

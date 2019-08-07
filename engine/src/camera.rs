@@ -1,5 +1,5 @@
-use std::f32::consts::PI;
 use cgmath::Matrix4;
+use std::f32::consts::PI;
 
 pub struct Camera {
     aspect_ratio: f32,
@@ -40,7 +40,7 @@ impl Camera {
         )
     }
 
-    fn compute_perspective(aspect_ratio: f32, zoom: f32) ->  Matrix4<f32> {
+    fn compute_perspective(aspect_ratio: f32, zoom: f32) -> Matrix4<f32> {
         let right = 10.0 * zoom;
         let left = -10.0 * zoom;
         let bottom = -10.0 * zoom;

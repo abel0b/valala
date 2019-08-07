@@ -1,6 +1,15 @@
+use crate::scene::NodeId;
 use glium::Surface;
 
+pub enum PickingEvent {
+    MouseUp(NodeId),
+    MouseDown(NodeId),
+    HoverEnter(NodeId),
+    HoverLeave(NodeId),
+}
+
 pub struct Picker {
+    entity: Option<NodeId>,
     picking_attachments: Option<(
         glium::texture::UnsignedTexture2d,
         glium::framebuffer::DepthRenderBuffer,
@@ -11,6 +20,7 @@ pub struct Picker {
 impl Picker {
     pub fn new(display: &glium::Display) -> Picker {
         Picker {
+            entity: None,
             picking_attachments: None,
             picking_pbo: glium::texture::pixel_buffer::PixelBuffer::new_empty(display, 1),
         }
@@ -40,20 +50,7 @@ impl Picker {
         ))
     }
 
-    pub fn get_picked_object(&self) -> Option<(u16, u16)> {
-        match self.picking_pbo.read().map(|d| d[0]).unwrap() {
-            0 => None,
-            picked_id => Some({
-                let bytes = picked_id.to_be_bytes();
-                (
-                    u16::from_be_bytes([bytes[0], bytes[1]]),
-                    u16::from_be_bytes([bytes[2], bytes[3]]),
-                )
-            }),
-        }
-    }
-
-    pub fn commit(&self, cursor_position: Option<(i32, i32)>) {
+    pub fn commit(&mut self, cursor_position: Option<(i32, i32)>) {
         if let (Some(cursor), Some(&(ref picking_texture, _))) =
             (cursor_position, self.picking_attachments.as_ref())
         {
@@ -80,6 +77,27 @@ impl Picker {
         } else {
             self.picking_pbo.write(&[0]);
         }
+    }
+
+    pub fn update(&mut self) -> Vec<PickingEvent> {
+        let mut events = Vec::new();
+        self.entity = match self.picking_pbo.read().map(|d| d[0]).unwrap_or(0) {
+            0 => None,
+            id => {
+                let node_id = NodeId::Entity(id);
+                if let Some(previous_id) = self.entity {
+                    if previous_id != node_id {
+                        events.push(PickingEvent::HoverLeave(previous_id));
+                        events.push(PickingEvent::HoverEnter(node_id));
+                    }
+                } else {
+                    events.push(PickingEvent::HoverEnter(node_id));
+                }
+
+                Some(node_id)
+            }
+        };
+        events
     }
 
     pub fn target(

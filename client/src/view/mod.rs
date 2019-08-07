@@ -1,4 +1,4 @@
-mod tile;
 mod character;
-pub use tile::Tile;
-pub use character::Character;
+mod tile;
+pub use character::CharacterEntity;
+pub use tile::TileEntity;
