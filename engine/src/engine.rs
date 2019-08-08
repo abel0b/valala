@@ -9,23 +9,27 @@ use crate::{
     shader::Shader,
     stage::{Stage, StageMachine, Transition},
     store::Store,
+    store::World,
     texture::Texture,
 };
 
-pub struct Engine<'a, S, A> {
-    pub stage_machine: StageMachine<S, A>,
-    pub store: Store<'a, S, A>,
+pub struct Engine<'a, W: World> {
+    pub stage_machine: StageMachine<W>,
+    pub store: Store<'a, W>,
 }
 
-impl<'a, S, A> Engine<'a, S, A> {
-    pub fn new(store: Store<'a, S, A>) -> Result<Engine<'a, S, A>, Box<dyn Error>> {
+impl<'a, W> Engine<'a, W>
+where
+    W: World,
+{
+    pub fn new(store: Store<'a, W>) -> Result<Engine<'a, W>, Box<dyn Error>> {
         Ok(Engine {
             stage_machine: StageMachine::default(),
             store,
         })
     }
 
-    pub fn run(&mut self, initial_state: Box<dyn Stage<S, A>>) {
+    pub fn run(&mut self, initial_state: Box<dyn Stage<W>>) {
         self.store.context.resource_pack.register_shader(
             ShaderId("default"),
             Shader::from_source(
@@ -113,7 +117,7 @@ impl<'a, S, A> Engine<'a, S, A> {
         }
     }
 
-    fn update(&mut self) -> Transition<S, A> {
+    fn update(&mut self) -> Transition<W> {
         let mut action = self.stage_machine.update(&mut self.store);
         self.stage_machine.render(&mut self.store);
 

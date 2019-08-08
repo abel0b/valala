@@ -1,26 +1,28 @@
 use crate::context::Context;
 use crate::scene::Scene;
 
-pub struct Store<'a, S, A> {
-    pub context: Context<'a>,
-    pub state: S,
-    reducer: fn(&mut Store<'a, S, A>, &mut Scene<S, A>, A),
+pub trait World
+where
+    Self: std::marker::Sized,
+{
+    type Action;
+    fn apply<'a>(store: &mut Store<'a, Self>, scene: &mut Scene<Self>, action: Self::Action);
 }
 
-impl<'a, S, A> Store<'a, S, A> {
-    pub fn new(
-        context: Context<'a>,
-        state: S,
-        reducer: fn(&mut Store<'a, S, A>, &mut Scene<S, A>, A),
-    ) -> Store<'a, S, A> {
-        Store {
-            context,
-            state,
-            reducer,
-        }
+pub struct Store<'a, W: World> {
+    pub world: W,
+    pub context: Context<'a>,
+}
+
+impl<'a, W> Store<'a, W>
+where
+    W: World,
+{
+    pub fn new(context: Context<'a>, world: W) -> Store<'a, W> {
+        Store { context, world }
     }
 
-    pub fn dispatch(&mut self, scene: &mut Scene<S, A>, action: A) {
-        (self.reducer)(self, scene, action);
+    pub fn dispatch(&mut self, scene: &mut Scene<W>, action: W::Action) {
+        W::apply(self, scene, action);
     }
 }

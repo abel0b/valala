@@ -1,7 +1,4 @@
-use crate::{
-    stage::Lobby,
-    store::{Action, State},
-};
+use crate::{stage::Lobby, store::State};
 use valala_engine::{
     color::Color,
     prelude::{Scene, Stage, Transition},
@@ -10,16 +7,12 @@ use valala_engine::{
 
 pub struct Title;
 
-impl Stage<State, Action> for Title {
-    fn enter(&mut self, _store: &mut Store<State, Action>, scene: &mut Scene<State, Action>) {
+impl Stage<State> for Title {
+    fn enter(&mut self, _store: &mut Store<State>, scene: &mut Scene<State>) {
         scene.set_clear_color(Color::from_rgb(86, 64, 47));
     }
 
-    fn frame(
-        &mut self,
-        store: &mut Store<State, Action>,
-        _scene: &mut Scene<State, Action>,
-    ) -> Transition<State, Action> {
+    fn frame(&mut self, store: &mut Store<State>, _scene: &mut Scene<State>) -> Transition<State> {
         if store
             .context
             .clock

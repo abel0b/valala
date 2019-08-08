@@ -1,14 +1,14 @@
 use crate::geometry::{Geometry, GeometryBuilder};
 use crate::scene::NodeId;
-use crate::store::Store;
+use crate::store::{Store, World};
 
-pub trait Renderable<S, A> {
-    fn render(&self, store: &Store<S, A>, node: NodeId) -> View;
+pub trait Renderable<W: World> {
+    fn render(&self, store: &Store<W>, node: NodeId) -> View;
 }
 
-pub trait Hoverable<A> {
-    fn hover_enter(&self, node: NodeId) -> A;
-    fn hover_leave(&self, node: NodeId) -> A;
+pub trait Hoverable<W: World> {
+    fn hover_enter(&self, node: NodeId) -> W::Action;
+    fn hover_leave(&self, node: NodeId) -> W::Action;
 }
 
 #[derive(Default)]

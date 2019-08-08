@@ -5,7 +5,7 @@ use crate::{
     mesh::{Normal, PrimitiveType, Vertex},
     picking::PickingEvent,
     resource::{ShaderId, TextureId},
-    store::Store,
+    store::{Store, World},
     view::{Hoverable, Renderable, View},
 };
 use cgmath::num_traits::identities::One;
@@ -57,9 +57,9 @@ impl Cache {
         self.entries.iter()
     }
 
-    pub fn add<S, A>(
+    pub fn add<W: World>(
         &mut self,
-        store: &Store<S, A>,
+        store: &Store<W>,
         transform: cgmath::Matrix4<f32>,
         geometry: &Geometry,
     ) {
@@ -118,12 +118,12 @@ impl Default for Cache {
     }
 }
 
-pub struct Scene<S, A> {
+pub struct Scene<W: World> {
     last_id: u32,
     nodes: HashMap<NodeId, Node>,
     cameras: HashMap<NodeId, Camera>,
-    renderables: HashMap<NodeId, Rc<dyn Renderable<S, A>>>,
-    hoverables: HashMap<NodeId, Rc<dyn Hoverable<A>>>,
+    renderables: HashMap<NodeId, Rc<dyn Renderable<W>>>,
+    hoverables: HashMap<NodeId, Rc<dyn Hoverable<W>>>,
     views: HashMap<NodeId, View>,
     cache: Cache,
     clear_color: Color,
@@ -140,8 +140,11 @@ impl Node {
     }
 }
 
-impl<S, A> Default for Scene<S, A> {
-    fn default() -> Scene<S, A> {
+impl<W> Default for Scene<W>
+where
+    W: World,
+{
+    fn default() -> Scene<W> {
         let mut nodes = HashMap::new();
         nodes.insert(
             NodeId::Root,
@@ -160,8 +163,11 @@ impl<S, A> Default for Scene<S, A> {
     }
 }
 
-impl<S, A> Scene<S, A> {
-    pub fn new() -> Scene<S, A> {
+impl<W> Scene<W>
+where
+    W: World,
+{
+    pub fn new() -> Scene<W> {
         Default::default()
     }
 
@@ -190,7 +196,7 @@ impl<S, A> Scene<S, A> {
     pub fn set_renderable(
         &mut self,
         node_id: NodeId,
-        renderable: Rc<dyn Renderable<S, A>>,
+        renderable: Rc<dyn Renderable<W>>,
     ) -> Option<NodeId> {
         match node_id {
             NodeId::Entity(_id) => match self.nodes.get_mut(&node_id) {
@@ -207,7 +213,7 @@ impl<S, A> Scene<S, A> {
     pub fn set_hoverable(
         &mut self,
         node_id: NodeId,
-        hoverable: Rc<dyn Hoverable<A>>,
+        hoverable: Rc<dyn Hoverable<W>>,
     ) -> Option<NodeId> {
         match node_id {
             NodeId::Entity(_id) => match self.nodes.get_mut(&node_id) {
@@ -256,7 +262,7 @@ impl<S, A> Scene<S, A> {
         self.clear_color = color;
     }
 
-    pub fn render(&mut self, store: &mut Store<S, A>) {
+    pub fn render(&mut self, store: &mut Store<W>) {
         let mut target = store.context.backend.display.draw();
 
         for event in store.context.picker.update().iter() {

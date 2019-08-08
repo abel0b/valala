@@ -8,7 +8,7 @@ use valala_engine::{
 
 pub struct TileEntity;
 
-impl Hoverable<Action> for TileEntity {
+impl Hoverable<State> for TileEntity {
     fn hover_enter(&self, node: NodeId) -> Action {
         Action::HoverEnterTile(node)
     }
@@ -17,11 +17,11 @@ impl Hoverable<Action> for TileEntity {
     }
 }
 
-impl Renderable<State, Action> for TileEntity {
-    fn render(&self, store: &Store<State, Action>, node: NodeId) -> View {
+impl Renderable<State> for TileEntity {
+    fn render(&self, store: &Store<State>, node: NodeId) -> View {
         let mut view = ViewBuilder::from_node(node);
         let state = store
-            .state
+            .world
             .tiles
             .values()
             .find(|t| t.entity == node)

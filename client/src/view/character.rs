@@ -1,4 +1,4 @@
-use crate::store::{Action, State};
+use crate::store::State;
 use valala_engine::{
     resource::{ModelId, ShaderId, TextureId},
     scene::NodeId,
@@ -8,10 +8,10 @@ use valala_engine::{
 
 pub struct CharacterEntity;
 
-impl Renderable<State, Action> for CharacterEntity {
-    fn render(&self, store: &Store<State, Action>, node: NodeId) -> View {
+impl Renderable<State> for CharacterEntity {
+    fn render(&self, store: &Store<State>, node: NodeId) -> View {
         let state = store
-            .state
+            .world
             .actors
             .iter()
             .find(|t| t.entity == node)

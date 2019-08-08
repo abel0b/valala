@@ -5,7 +5,7 @@ mod store;
 mod view;
 
 use crate::stage::Title;
-use crate::store::{reducer, State};
+use crate::store::State;
 use clap::App;
 use std::boxed::Box;
 use std::error::Error;
@@ -38,7 +38,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         context
     };
 
-    let store = Store::new(context, State::new(), reducer);
+    let store = Store::new(context, State::new());
 
     let mut engine = Engine::new(store)?;
 

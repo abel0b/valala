@@ -1,28 +1,34 @@
-use crate::{scene::Scene, store::Store};
+use crate::{
+    scene::Scene,
+    store::{Store, World},
+};
 
-pub enum Transition<S, A> {
-    Push(Box<dyn Stage<S, A>>),
-    Switch(Box<dyn Stage<S, A>>),
+pub enum Transition<W: World> {
+    Push(Box<dyn Stage<W>>),
+    Switch(Box<dyn Stage<W>>),
     Pop,
     Continue,
     Quit,
 }
 
-pub trait Stage<S, A> {
-    fn enter(&mut self, _store: &mut Store<S, A>, _scene: &mut Scene<S, A>) {}
-    fn frame(&mut self, store: &mut Store<S, A>, scene: &mut Scene<S, A>) -> Transition<S, A>;
-    fn pause(&mut self, _store: &mut Store<S, A>) {}
-    fn resume(&mut self, _store: &mut Store<S, A>) {}
-    fn leave(&mut self, _store: &mut Store<S, A>) {}
+pub trait Stage<W: World> {
+    fn enter(&mut self, _store: &mut Store<W>, _scene: &mut Scene<W>) {}
+    fn frame(&mut self, store: &mut Store<W>, scene: &mut Scene<W>) -> Transition<W>;
+    fn pause(&mut self, _store: &mut Store<W>) {}
+    fn resume(&mut self, _store: &mut Store<W>) {}
+    fn leave(&mut self, _store: &mut Store<W>) {}
 }
 
-pub struct StageMachine<S, A> {
-    states: Vec<Box<dyn Stage<S, A>>>,
-    scenes: Vec<Scene<S, A>>,
+pub struct StageMachine<W: World> {
+    states: Vec<Box<dyn Stage<W>>>,
+    scenes: Vec<Scene<W>>,
 }
 
-impl<S, A> Default for StageMachine<S, A> {
-    fn default() -> StageMachine<S, A> {
+impl<W> Default for StageMachine<W>
+where
+    W: World,
+{
+    fn default() -> StageMachine<W> {
         StageMachine {
             states: Vec::new(),
             scenes: Vec::new(),
@@ -30,8 +36,11 @@ impl<S, A> Default for StageMachine<S, A> {
     }
 }
 
-impl<S, A> StageMachine<S, A> {
-    pub fn push(&mut self, store: &mut Store<S, A>, mut stage: Box<dyn Stage<S, A>>) {
+impl<W> StageMachine<W>
+where
+    W: World,
+{
+    pub fn push(&mut self, store: &mut Store<W>, mut stage: Box<dyn Stage<W>>) {
         if let Some(prevstate) = self.states.last_mut() {
             prevstate.pause(store);
         }
@@ -42,7 +51,7 @@ impl<S, A> StageMachine<S, A> {
         self.states.push(stage);
     }
 
-    pub fn pop(&mut self, store: &mut Store<S, A>) {
+    pub fn pop(&mut self, store: &mut Store<W>) {
         match self.states.pop() {
             Some(mut stage) => stage.leave(store),
             None => panic!("Empty state machine"),
@@ -53,25 +62,25 @@ impl<S, A> StageMachine<S, A> {
         }
     }
 
-    pub fn current(&mut self) -> Option<&mut dyn Stage<S, A>> {
+    pub fn current(&mut self) -> Option<&mut dyn Stage<W>> {
         match self.states.last_mut() {
             Some(state) => Some(state.as_mut()),
             None => None,
         }
     }
 
-    pub fn scene(&mut self) -> &mut Scene<S, A> {
+    pub fn scene(&mut self) -> &mut Scene<W> {
         self.scenes.last_mut().unwrap()
     }
 
-    pub fn update(&mut self, store: &mut Store<S, A>) -> Transition<S, A> {
+    pub fn update(&mut self, store: &mut Store<W>) -> Transition<W> {
         match self.states.last_mut() {
             Some(stage) => stage.frame(store, self.scenes.last_mut().unwrap()),
             None => Transition::Quit,
         }
     }
 
-    pub fn render(&mut self, store: &mut Store<S, A>) {
+    pub fn render(&mut self, store: &mut Store<W>) {
         self.scenes.last_mut().unwrap().render(store);
     }
 }

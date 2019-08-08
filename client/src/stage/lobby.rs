@@ -7,17 +7,13 @@ use valala_engine::{
 
 pub struct Lobby;
 
-impl Stage<State, Action> for Lobby {
-    fn enter(&mut self, store: &mut Store<State, Action>, scene: &mut Scene<State, Action>) {
+impl Stage<State> for Lobby {
+    fn enter(&mut self, store: &mut Store<State>, scene: &mut Scene<State>) {
         store.dispatch(scene, Action::EnterLobby);
         store.dispatch(scene, Action::LoadRandomMap);
     }
 
-    fn frame(
-        &mut self,
-        store: &mut Store<State, Action>,
-        scene: &mut Scene<State, Action>,
-    ) -> Transition<State, Action> {
+    fn frame(&mut self, store: &mut Store<State>, scene: &mut Scene<State>) -> Transition<State> {
         store.dispatch(scene, Action::Nop);
         Transition::Continue
     }
