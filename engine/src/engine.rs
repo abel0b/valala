@@ -121,36 +121,9 @@ where
         let mut action = self.stage_machine.update(&mut self.store);
         self.stage_machine.render(&mut self.store);
 
-        for e in self.store.context.events().iter() {
-            match e {
-                glium::glutin::Event::WindowEvent { event, .. } => match event {
-                    glium::glutin::WindowEvent::CloseRequested => action = Transition::Quit,
-                    glium::glutin::WindowEvent::Resized(glium::glutin::dpi::LogicalSize {
-                        width,
-                        height,
-                    }) => {
-                        self.store.context.picker.initialize_picking_attachments(
-                            &self.store.context.backend.display,
-                            (*width as u32, *height as u32),
-                        );
-                        // self.stage_machine
-                        //     .scene()
-                        //     .camera
-                        //     .scale((height / width) as f32);
-                    }
-                    // glium::glutin::WindowEvent::MouseWheel { delta, .. } => {
-                    //     if let glium::glutin::MouseScrollDelta::LineDelta(_x, y) = delta {
-                    //         self.stage_machine.scene().camera.zoom(*y);
-                    //     }
-                    // },
-                    glium::glutin::WindowEvent::CursorMoved { position, .. } => {
-                        self.store.context.mouse.position =
-                            Some((position.x as i32, position.y as i32));
-                    }
-                    _ => (),
-                },
-                glium::glutin::Event::DeviceEvent { .. } => (),
-                _ => (),
+        if action.is_continue() {
+            for e in self.store.context.events().iter() {
+                action = self.stage_machine.handle(&mut self.store, e)
             }
         }
 

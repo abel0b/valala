@@ -4,7 +4,6 @@ use std::f32::consts::PI;
 pub struct Camera {
     aspect_ratio: f32,
     pub view: Matrix4<f32>,
-    pub model: Matrix4<f32>,
     pub perspective: Matrix4<f32>,
     pub zoom: f32,
 }
@@ -14,7 +13,6 @@ impl Camera {
         Camera {
             aspect_ratio,
             view: Self::compute_view(),
-            model: Self::compute_model(),
             perspective: Self::compute_perspective(aspect_ratio, 1.0),
             zoom: 1.0,
         }
@@ -37,7 +35,8 @@ impl Camera {
                 y: 1.0,
                 z: 0.0,
             },
-        )
+        ) * cgmath::Matrix4::from_angle_x(cgmath::Rad(-(1.0 / 2.0f32.sqrt()).atan()))
+            * cgmath::Matrix4::from_angle_y(cgmath::Rad(PI / 4.0))
     }
 
     fn compute_perspective(aspect_ratio: f32, zoom: f32) -> Matrix4<f32> {
@@ -51,13 +50,8 @@ impl Camera {
             * cgmath::ortho(left, right, bottom, top, near, far)
     }
 
-    fn compute_model() -> Matrix4<f32> {
-        cgmath::Matrix4::from_angle_x(cgmath::Rad(-(1.0 / 2.0f32.sqrt()).atan()))
-            * cgmath::Matrix4::from_angle_y(cgmath::Rad(PI / 4.0))
-    }
-
     pub fn matrix(&self) -> Matrix4<f32> {
-        self.perspective * self.view * self.model
+        self.perspective * self.view
     }
 
     pub fn scale(&mut self, aspect_ratio: f32) {

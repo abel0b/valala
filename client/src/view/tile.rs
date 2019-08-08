@@ -3,7 +3,7 @@ use valala_engine::{
     resource::ShaderId,
     scene::NodeId,
     store::Store,
-    view::{Hoverable, Renderable, View, ViewBuilder},
+    view::{Clickable, Hoverable, Renderable, View, ViewBuilder},
 };
 
 pub struct TileEntity;
@@ -14,6 +14,15 @@ impl Hoverable<State> for TileEntity {
     }
     fn hover_leave(&self, node: NodeId) -> Action {
         Action::HoverLeaveTile(node)
+    }
+}
+
+impl Clickable<State> for TileEntity {
+    fn mouse_up(&self, _node: NodeId) -> Action {
+        Action::Nop
+    }
+    fn mouse_down(&self, node: NodeId) -> Action {
+        Action::MouseDownTile(node)
     }
 }
 

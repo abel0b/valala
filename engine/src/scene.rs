@@ -1,3 +1,4 @@
+use crate::stage::Transition;
 use crate::{
     camera::Camera,
     color::Color,
@@ -6,7 +7,7 @@ use crate::{
     picking::PickingEvent,
     resource::{ShaderId, TextureId},
     store::{Store, World},
-    view::{Hoverable, Renderable, View},
+    view::{Clickable, Hoverable, Renderable, View},
 };
 use cgmath::num_traits::identities::One;
 use cgmath::Matrix4;
@@ -124,6 +125,7 @@ pub struct Scene<W: World> {
     cameras: HashMap<NodeId, Camera>,
     renderables: HashMap<NodeId, Rc<dyn Renderable<W>>>,
     hoverables: HashMap<NodeId, Rc<dyn Hoverable<W>>>,
+    clickables: HashMap<NodeId, Rc<dyn Clickable<W>>>,
     views: HashMap<NodeId, View>,
     cache: Cache,
     clear_color: Color,
@@ -157,6 +159,7 @@ where
             cameras: HashMap::new(),
             renderables: HashMap::new(),
             hoverables: HashMap::new(),
+            clickables: HashMap::new(),
             views: HashMap::new(),
             clear_color: Color::from_rgb(12, 12, 12),
         }
@@ -227,6 +230,23 @@ where
         }
     }
 
+    pub fn set_clickable(
+        &mut self,
+        node_id: NodeId,
+        clickable: Rc<dyn Clickable<W>>,
+    ) -> Option<NodeId> {
+        match node_id {
+            NodeId::Entity(_id) => match self.nodes.get_mut(&node_id) {
+                Some(_) => {
+                    self.clickables.insert(node_id, clickable);
+                    Some(node_id)
+                }
+                None => None,
+            },
+            _ => None,
+        }
+    }
+
     pub fn add_camera(&mut self, parent_id: NodeId, camera: Camera) -> Option<NodeId> {
         let id = NodeId::Camera(self.next_id());
         match self.nodes.get_mut(&parent_id) {
@@ -268,14 +288,16 @@ where
         for event in store.context.picker.update().iter() {
             match event {
                 PickingEvent::HoverEnter(node_id) => {
-                    let hoverable = self.hoverables.get(node_id).unwrap();
-                    let action = hoverable.hover_enter(*node_id);
-                    store.dispatch(self, action);
+                    if let Some(hoverable) = self.hoverables.get(node_id) {
+                        let action = hoverable.hover_enter(*node_id);
+                        store.dispatch(self, action);
+                    }
                 }
                 PickingEvent::HoverLeave(node_id) => {
-                    let hoverable = self.hoverables.get(node_id).unwrap();
-                    let action = hoverable.hover_leave(*node_id);
-                    store.dispatch(self, action);
+                    if let Some(hoverable) = self.hoverables.get(node_id) {
+                        let action = hoverable.hover_leave(*node_id);
+                        store.dispatch(self, action);
+                    }
                 }
                 PickingEvent::MouseUp(_node_id) => {}
                 PickingEvent::MouseDown(_node_id) => {}
@@ -386,5 +408,60 @@ where
 
         store.context.picker.commit(store.context.mouse.position);
         target.finish().unwrap();
+    }
+
+    pub fn handle(&mut self, store: &mut Store<W>, event: &glium::glutin::Event) -> Transition<W> {
+        let mut action = Transition::Continue;
+        match event {
+            glium::glutin::Event::WindowEvent { event, .. } => match event {
+                glium::glutin::WindowEvent::CloseRequested => action = Transition::Quit,
+                glium::glutin::WindowEvent::Resized(glium::glutin::dpi::LogicalSize {
+                    width,
+                    height,
+                }) => {
+                    store.context.picker.initialize_picking_attachments(
+                        &store.context.backend.display,
+                        (*width as u32, *height as u32),
+                    );
+                    // self.stage_machine
+                    //     .scene()
+                    //     .camera
+                    //     .scale((height / width) as f32);
+                }
+                // glium::glutin::WindowEvent::MouseWheel { delta, .. } => {
+                //     if let glium::glutin::MouseScrollDelta::LineDelta(_x, y) = delta {
+                //         self.stage_machine.scene().camera.zoom(*y);
+                //     }
+                // },
+                glium::glutin::WindowEvent::CursorMoved { position, .. } => {
+                    store.context.mouse.position = Some((position.x as i32, position.y as i32));
+                }
+                glium::glutin::WindowEvent::MouseInput { state, .. } => {
+                    let action = if let Some(node) = store.context.picker.entity {
+                        if let Some(clickable) = self.clickables.get(&node) {
+                            match state {
+                                glium::glutin::ElementState::Pressed => {
+                                    Some(clickable.mouse_down(node))
+                                }
+                                glium::glutin::ElementState::Released => {
+                                    Some(clickable.mouse_up(node))
+                                }
+                            }
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    };
+                    if let Some(action) = action {
+                        store.dispatch(self, action)
+                    }
+                }
+                _ => (),
+            },
+            glium::glutin::Event::DeviceEvent { .. } => (),
+            _ => (),
+        }
+        action
     }
 }

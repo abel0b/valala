@@ -9,7 +9,7 @@ pub enum PickingEvent {
 }
 
 pub struct Picker {
-    entity: Option<NodeId>,
+    pub entity: Option<NodeId>,
     picking_attachments: Option<(
         glium::texture::UnsignedTexture2d,
         glium::framebuffer::DepthRenderBuffer,

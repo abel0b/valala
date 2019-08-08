@@ -1,10 +1,12 @@
-use crate::store::{Action, Character, Tile};
-use crate::view::{CharacterEntity, TileEntity};
-use rand::Rng;
+use crate::store::{Action, Character, Tile, Trap};
+use crate::view::{CharacterEntity, TileEntity, TrapEntity};
+use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
 use std::collections::HashMap;
 use std::rc::Rc;
 use valala_engine::scene::Scene;
 use valala_engine::store::Store;
+use valala_engine::view::Clickable;
 use valala_engine::{
     camera::Camera,
     view::{Hoverable, Renderable},
@@ -15,6 +17,7 @@ pub struct State {
     pub camera: Option<NodeId>,
     pub map: Option<NodeId>,
     pub tiles: HashMap<(i32, i32, i32), Tile>,
+    pub traps: HashMap<(i32, i32, i32), Trap>,
     pub actors: Vec<Character>,
 }
 
@@ -24,13 +27,23 @@ impl World for State {
     fn apply(store: &mut Store<State>, scene: &mut Scene<State>, action: Action) {
         match action {
             Action::HoverEnterTile(node) => {
-                store
+                let tile = store
                     .world
                     .tiles
                     .values_mut()
                     .find(|t| t.entity == node)
-                    .unwrap()
-                    .hovered = true;
+                    .unwrap();
+                println!("tile ({} {} {})", tile.q, tile.r, tile.y);
+                tile.hovered = true;
+            }
+            Action::MouseDownTile(node) => {
+                let tile = store
+                    .world
+                    .tiles
+                    .values_mut()
+                    .find(|t| t.entity == node)
+                    .unwrap();
+                store.world.actors.first_mut().unwrap().position = (tile.q, tile.r, tile.y);
             }
             Action::HoverLeaveTile(node) => {
                 store
@@ -58,7 +71,7 @@ impl World for State {
                 store.world.map = Some(scene.add_group(store.world.camera.unwrap()).unwrap());
                 let map = store.world.map.unwrap();
 
-                let mut rng = rand::thread_rng();
+                let mut rng: StdRng = SeedableRng::from_seed([2; 32]);
                 let map_radius = 5;
                 for q in -map_radius..=map_radius {
                     let r1 = std::cmp::max(-map_radius, -q - map_radius);
@@ -78,6 +91,10 @@ impl World for State {
                             tile_node,
                             Rc::clone(&tile_entity) as Rc<dyn Hoverable<State>>,
                         );
+                        scene.set_clickable(
+                            tile_node,
+                            Rc::clone(&tile_entity) as Rc<dyn Clickable<State>>,
+                        );
                         if rng.gen_range(0.0, 10.0) < 2.0 {
                             let tile_node = scene.add_entity(map).unwrap();
                             store
@@ -93,6 +110,10 @@ impl World for State {
                                 tile_node,
                                 Rc::clone(&tile_entity) as Rc<dyn Hoverable<State>>,
                             );
+                            scene.set_clickable(
+                                tile_node,
+                                Rc::clone(&tile_entity) as Rc<dyn Clickable<State>>,
+                            );
                         }
                     }
                 }
@@ -104,6 +125,14 @@ impl World for State {
                     character_node,
                     character_entity as Rc<dyn Renderable<State>>,
                 );
+
+                let trap_node = scene.add_entity(map).unwrap();
+                store
+                    .world
+                    .traps
+                    .insert((2, 2, 0), Trap::new(trap_node, 2, 2, 0));
+                let trap_entity = Rc::new(TrapEntity);
+                scene.set_renderable(trap_node, trap_entity as Rc<dyn Renderable<State>>);
             }
             Action::Nop => {}
         }
@@ -115,6 +144,7 @@ impl Default for State {
         State {
             camera: None,
             map: None,
+            traps: HashMap::new(),
             tiles: HashMap::new(),
             actors: Vec::new(),
         }

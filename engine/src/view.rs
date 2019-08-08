@@ -11,6 +11,11 @@ pub trait Hoverable<W: World> {
     fn hover_leave(&self, node: NodeId) -> W::Action;
 }
 
+pub trait Clickable<W: World> {
+    fn mouse_up(&self, node: NodeId) -> W::Action;
+    fn mouse_down(&self, node: NodeId) -> W::Action;
+}
+
 #[derive(Default)]
 pub struct View {
     pub geometries: Vec<Geometry>,

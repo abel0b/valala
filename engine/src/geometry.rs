@@ -3,7 +3,7 @@ use crate::{
     resource::{ModelId, ShaderId, TextureId},
 };
 use cgmath::num_traits::identities::One;
-use cgmath::{Matrix4, Rad};
+use cgmath::{Matrix4, Rad, Vector3};
 
 pub enum Shape {
     Model(ModelId),
@@ -83,6 +83,11 @@ impl GeometryBuilder {
             model_id: Some(model_id),
             ..Default::default()
         }
+    }
+
+    pub fn translate(&mut self, vector: Vector3<f32>) -> &mut GeometryBuilder {
+        self.transform = self.transform * Matrix4::from_translation(vector);
+        self
     }
 
     pub fn scale(&mut self, value: f32) -> &mut GeometryBuilder {

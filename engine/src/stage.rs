@@ -11,6 +11,18 @@ pub enum Transition<W: World> {
     Quit,
 }
 
+impl<W> Transition<W>
+where
+    W: World,
+{
+    pub fn is_continue(&self) -> bool {
+        match self {
+            Transition::Continue => true,
+            _ => false,
+        }
+    }
+}
+
 pub trait Stage<W: World> {
     fn enter(&mut self, _store: &mut Store<W>, _scene: &mut Scene<W>) {}
     fn frame(&mut self, store: &mut Store<W>, scene: &mut Scene<W>) -> Transition<W>;
@@ -82,5 +94,9 @@ where
 
     pub fn render(&mut self, store: &mut Store<W>) {
         self.scenes.last_mut().unwrap().render(store);
+    }
+
+    pub fn handle(&mut self, store: &mut Store<W>, event: &glium::glutin::Event) -> Transition<W> {
+        self.scenes.last_mut().unwrap().handle(store, event)
     }
 }

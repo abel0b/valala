@@ -38,6 +38,7 @@ impl Orientation {
 
 pub struct Character {
     pub entity: NodeId,
+    pub position: (i32, i32, i32),
     pub orientation: Orientation,
     pub scale: f32,
 }
@@ -46,6 +47,7 @@ impl Character {
     pub fn new(entity: NodeId) -> Character {
         Character {
             entity,
+            position: (0, 0, 0),
             orientation: Orientation::random(),
             scale: 1.0,
         }
