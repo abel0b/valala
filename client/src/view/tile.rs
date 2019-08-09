@@ -1,4 +1,4 @@
-use crate::store::{Action, State, Tile};
+use crate::store::{Action, State, TileKind, TileState};
 use valala_engine::{
     resource::ShaderId,
     scene::NodeId,
@@ -31,14 +31,15 @@ impl Renderable<State> for TileEntity {
         let mut view = ViewBuilder::from_node(node);
         let state = store
             .world
+            .map
             .tiles
             .values()
             .find(|t| t.entity == node)
             .unwrap();
         let tile = view.geometry();
-        let color = if state.hovered {
-            (0.1, 0.8, 0.1, 1.0)
-        } else if state.y == 0 {
+        let color = if state.state != TileState::Normal {
+            (0.8, 0.8, 0.1, 1.0)
+        } else if state.kind == TileKind::Ground {
             let a = (((state.q - state.r) % 3 + 3) % 3) as f32;
             (
                 0.85 + a * 0.1,
@@ -53,7 +54,7 @@ impl Renderable<State> for TileEntity {
         tile.vertex(
             (
                 state.center.0,
-                (state.y as f32) * Tile::HEIGHT,
+                (state.y as f32) * state.height,
                 state.center.1,
             ),
             color,
@@ -98,7 +99,7 @@ impl Renderable<State> for TileEntity {
             .vertex(
                 (
                     state.center.0,
-                    (state.y as f32) * Tile::HEIGHT,
+                    (state.y as f32) * state.height,
                     state.center.1,
                 ),
                 color,

@@ -1,12 +1,27 @@
 use core::f32::consts::PI;
 use valala_engine::scene::NodeId;
 
+#[derive(Eq, PartialEq, Copy, Clone)]
+pub enum TileKind {
+    Obstacle,
+    Ground,
+}
+
+#[derive(Eq, PartialEq, Copy, Clone)]
+pub enum TileState {
+    Hover,
+    Path,
+    Normal,
+}
+
 pub struct Tile {
+    pub kind: TileKind,
     pub entity: NodeId,
-    pub hovered: bool,
+    pub state: TileState,
     pub q: i32,
     pub r: i32,
     pub y: i32,
+    pub height: f32,
     pub center: (f32, f32),
     pub corners_up: [(f32, f32, f32); 6],
     pub corners_down: [(f32, f32, f32); 6],
@@ -15,29 +30,35 @@ pub struct Tile {
 impl Tile {
     pub const CONVMAT: [[f32; 2]; 2] = [[3.0 / 2.0, 0.0], [1.732_050_8 / 2.0, 1.732_050_8]];
     pub const SIZE: (f32, f32) = (1.0, 1.0);
-    pub const HEIGHT: f32 = 0.5;
 
-    pub fn new(entity: NodeId, q: i32, r: i32, y: i32) -> Tile {
+    pub fn new(entity: NodeId, q: i32, r: i32, kind: TileKind) -> Tile {
         let center = Self::center(q, r);
+        let y = 0;
+        let height = match kind {
+            TileKind::Obstacle => 1.0,
+            TileKind::Ground => 0.5,
+        };
         let corners_down = [
-            Self::corner(center, 0, (y as f32) * Self::HEIGHT),
-            Self::corner(center, 1, (y as f32) * Self::HEIGHT),
-            Self::corner(center, 2, (y as f32) * Self::HEIGHT),
-            Self::corner(center, 3, (y as f32) * Self::HEIGHT),
-            Self::corner(center, 4, (y as f32) * Self::HEIGHT),
-            Self::corner(center, 5, (y as f32) * Self::HEIGHT),
+            Self::corner(center, 0, (y as f32) * height),
+            Self::corner(center, 1, (y as f32) * height),
+            Self::corner(center, 2, (y as f32) * height),
+            Self::corner(center, 3, (y as f32) * height),
+            Self::corner(center, 4, (y as f32) * height),
+            Self::corner(center, 5, (y as f32) * height),
         ];
         let corners_up = [
-            Self::corner(center, 0, (y as f32) * Self::HEIGHT + Self::HEIGHT),
-            Self::corner(center, 1, (y as f32) * Self::HEIGHT + Self::HEIGHT),
-            Self::corner(center, 2, (y as f32) * Self::HEIGHT + Self::HEIGHT),
-            Self::corner(center, 3, (y as f32) * Self::HEIGHT + Self::HEIGHT),
-            Self::corner(center, 4, (y as f32) * Self::HEIGHT + Self::HEIGHT),
-            Self::corner(center, 5, (y as f32) * Self::HEIGHT + Self::HEIGHT),
+            Self::corner(center, 0, (y as f32) * height + height),
+            Self::corner(center, 1, (y as f32) * height + height),
+            Self::corner(center, 2, (y as f32) * height + height),
+            Self::corner(center, 3, (y as f32) * height + height),
+            Self::corner(center, 4, (y as f32) * height + height),
+            Self::corner(center, 5, (y as f32) * height + height),
         ];
         Tile {
+            kind,
+            height,
             entity,
-            hovered: false,
+            state: TileState::Normal,
             q,
             r,
             y,

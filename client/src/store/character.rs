@@ -3,23 +3,23 @@ use valala_engine::{math::Deg, scene::NodeId};
 
 #[derive(Copy, Clone)]
 pub enum Orientation {
-    Zero = 0,
-    One = 1,
-    Two = 2,
-    Three = 3,
-    Four = 4,
-    Five = 5,
+    Forward = 0,
+    Right = 1,
+    RightBack = 2,
+    Back = 3,
+    LeftBack = 4,
+    Left = 5,
 }
 
 impl From<u8> for Orientation {
     fn from(n: u8) -> Orientation {
         match n {
-            0 => Orientation::Zero,
-            1 => Orientation::One,
-            2 => Orientation::Two,
-            3 => Orientation::Three,
-            4 => Orientation::Four,
-            5 => Orientation::Five,
+            0 => Orientation::Forward,
+            1 => Orientation::Right,
+            2 => Orientation::RightBack,
+            3 => Orientation::Back,
+            4 => Orientation::LeftBack,
+            5 => Orientation::Left,
             _ => panic!("can't convert {} into Orientation", n),
         }
     }
