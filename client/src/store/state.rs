@@ -1,22 +1,20 @@
 use crate::store::tile::{TileKind, TileState};
 use crate::store::Map;
 use crate::store::{Action, Character, Tile, Trap};
-use crate::view::{CharacterEntity, TileEntity, TrapEntity};
+use crate::view::{character, tile, trap};
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use std::collections::HashMap;
-use std::rc::Rc;
 use valala_engine::scene::Scene;
 use valala_engine::store::Store;
-use valala_engine::view::Clickable;
+use valala_engine::{scene::Camera, scene::Uid};
 use valala_engine::{
-    camera::Camera,
-    view::{Hoverable, Renderable},
+    scene::{Entity, NodeIndex},
+    store::World,
 };
-use valala_engine::{scene::NodeId, store::World};
 
 pub struct State {
-    pub camera: Option<NodeId>,
+    pub camera: Option<Uid>,
     pub map: Map,
     pub traps: HashMap<(i32, i32, i32), Trap>,
     pub actors: Vec<Character>,
@@ -84,7 +82,7 @@ impl World for State {
                 store.world.camera = Some(
                     scene
                         .add_camera(
-                            NodeId::Root,
+                            NodeIndex::Root,
                             Camera::isometric(
                                 store.context.window.height as f32
                                     / store.context.window.width as f32,
@@ -94,9 +92,11 @@ impl World for State {
                 );
             }
             Action::LoadRandomMap => {
-                store.world.map.entity =
-                    Some(scene.add_group(store.world.camera.unwrap()).unwrap());
-                let map = store.world.map.entity.unwrap();
+                store.world.map.entity = Some(
+                    scene
+                        .add_group(NodeIndex::Camera(store.world.camera.unwrap()))
+                        .unwrap(),
+                );
 
                 let mut rng: StdRng = SeedableRng::from_seed([2; 32]);
                 let map_radius = 5;
@@ -110,43 +110,55 @@ impl World for State {
                             TileKind::Ground
                         };
 
-                        let tile_node = scene.add_entity(map).unwrap();
+                        let tile_node = scene
+                            .add_entity(
+                                NodeIndex::Group(store.world.map.entity.unwrap()),
+                                Entity {
+                                    render: Some(tile::render),
+                                    on_hover_enter: Some(tile::on_hover_enter),
+                                    on_hover_leave: Some(tile::on_hover_leave),
+                                    on_mouse_down: Some(tile::on_mouse_down),
+                                    on_mouse_up: Some(tile::on_mouse_up),
+                                },
+                            )
+                            .unwrap();
                         store
                             .world
                             .map
                             .tiles
                             .insert((q, r), Tile::new(tile_node, q, r, kind));
-                        let tile_entity = Rc::new(TileEntity);
-                        scene.set_renderable(
-                            tile_node,
-                            Rc::clone(&tile_entity) as Rc<dyn Renderable<State>>,
-                        );
-                        scene.set_hoverable(
-                            tile_node,
-                            Rc::clone(&tile_entity) as Rc<dyn Hoverable<State>>,
-                        );
-                        scene.set_clickable(
-                            tile_node,
-                            Rc::clone(&tile_entity) as Rc<dyn Clickable<State>>,
-                        );
                     }
                 }
 
-                let character_node = scene.add_entity(map).unwrap();
+                let character_node = scene
+                    .add_entity(
+                        NodeIndex::Group(store.world.map.entity.unwrap()),
+                        Entity {
+                            render: Some(character::render),
+                            on_hover_enter: None,
+                            on_hover_leave: None,
+                            on_mouse_down: None,
+                            on_mouse_up: None,
+                        },
+                    )
+                    .unwrap();
                 store.world.actors.push(Character::new(character_node));
-                let character_entity = Rc::new(CharacterEntity);
-                scene.set_renderable(
-                    character_node,
-                    character_entity as Rc<dyn Renderable<State>>,
-                );
-
-                let trap_node = scene.add_entity(map).unwrap();
+                let trap = scene
+                    .add_entity(
+                        NodeIndex::Group(store.world.map.entity.unwrap()),
+                        Entity {
+                            render: Some(trap::render),
+                            on_hover_enter: None,
+                            on_hover_leave: None,
+                            on_mouse_down: None,
+                            on_mouse_up: None,
+                        },
+                    )
+                    .unwrap();
                 store
                     .world
                     .traps
-                    .insert((2, 2, 0), Trap::new(trap_node, 2, 2, 0));
-                let trap_entity = Rc::new(TrapEntity);
-                scene.set_renderable(trap_node, trap_entity as Rc<dyn Renderable<State>>);
+                    .insert((2, 2, 1), Trap::new(trap, 2, 2, 1));
             }
             Action::Nop => {}
         }

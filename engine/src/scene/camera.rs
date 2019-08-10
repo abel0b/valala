@@ -1,4 +1,4 @@
-use cgmath::Matrix4;
+use nalgebra::{Matrix4, Point3, Unit, Vector, Vector3};
 use std::f32::consts::PI;
 
 pub struct Camera {
@@ -19,24 +19,17 @@ impl Camera {
     }
 
     fn compute_view() -> Matrix4<f32> {
-        cgmath::Matrix4::look_at_dir(
-            cgmath::Point3 {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
-            cgmath::Vector3 {
-                x: 0.0,
-                y: 0.0,
-                z: 1.0,
-            },
-            cgmath::Vector3 {
-                x: 0.0,
-                y: 1.0,
-                z: 0.0,
-            },
-        ) * cgmath::Matrix4::from_angle_x(cgmath::Rad(-(1.0 / 2.0f32.sqrt()).atan()))
-            * cgmath::Matrix4::from_angle_y(cgmath::Rad(PI / 4.0))
+        Matrix4::look_at_rh(
+            &Point3::from([0.0, 0.0, 0.0]),
+            &Point3::from([0.0, 0.0, 1.0]),
+            &Vector3::from([0.0, 1.0, 0.0]),
+        ) * Matrix4::from_axis_angle(
+            &Unit::new_normalize(Vector3::from([1.0, 0.0, 0.0])),
+            -(1.0 / 2.0f32.sqrt()).atan(),
+        ) * Matrix4::from_axis_angle(
+            &Unit::new_normalize(Vector3::from([0.0, 1.0, 0.0])),
+            PI / 4.0,
+        )
     }
 
     fn compute_perspective(aspect_ratio: f32, zoom: f32) -> Matrix4<f32> {
@@ -46,8 +39,8 @@ impl Camera {
         let top = 10.0 * zoom;
         let far = 200.0;
         let near = -100.0;
-        cgmath::Matrix4::from_nonuniform_scale(aspect_ratio, 1.0, 1.0)
-            * cgmath::ortho(left, right, bottom, top, near, far)
+        Matrix4::new_nonuniform_scaling(&Vector::from([aspect_ratio, 1.0, 1.0]))
+            * Matrix4::new_orthographic(left, right, bottom, top, near, far)
     }
 
     pub fn matrix(&self) -> Matrix4<f32> {

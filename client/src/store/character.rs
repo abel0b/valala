@@ -1,5 +1,5 @@
 use rand::Rng;
-use valala_engine::{math::Deg, scene::NodeId};
+use valala_engine::scene::Uid;
 
 #[derive(Copy, Clone)]
 pub enum Orientation {
@@ -26,8 +26,8 @@ impl From<u8> for Orientation {
 }
 
 impl Orientation {
-    pub fn angle(self) -> Deg<f32> {
-        Deg((self as i32 as f32) * 60.0)
+    pub fn angle(self) -> f32 {
+        (self as i32 as f32) * 60.0
     }
 
     pub fn random() -> Orientation {
@@ -37,14 +37,14 @@ impl Orientation {
 }
 
 pub struct Character {
-    pub entity: NodeId,
+    pub entity: Uid,
     pub position: (i32, i32, i32),
     pub orientation: Orientation,
     pub scale: f32,
 }
 
 impl Character {
-    pub fn new(entity: NodeId) -> Character {
+    pub fn new(entity: Uid) -> Character {
         Character {
             entity,
             position: (0, 0, 0),

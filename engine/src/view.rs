@@ -1,20 +1,6 @@
 use crate::geometry::{Geometry, GeometryBuilder};
-use crate::scene::NodeId;
-use crate::store::{Store, World};
-
-pub trait Renderable<W: World> {
-    fn render(&self, store: &Store<W>, node: NodeId) -> View;
-}
-
-pub trait Hoverable<W: World> {
-    fn hover_enter(&self, node: NodeId) -> W::Action;
-    fn hover_leave(&self, node: NodeId) -> W::Action;
-}
-
-pub trait Clickable<W: World> {
-    fn mouse_up(&self, node: NodeId) -> W::Action;
-    fn mouse_down(&self, node: NodeId) -> W::Action;
-}
+use crate::scene::NodeIndex;
+use crate::scene::Uid;
 
 #[derive(Default)]
 pub struct View {
@@ -40,9 +26,9 @@ impl ViewBuilder {
         }
     }
 
-    pub fn from_node(node: NodeId) -> ViewBuilder {
+    pub fn from_node(node: NodeIndex) -> ViewBuilder {
         match node {
-            NodeId::Entity(id) => ViewBuilder {
+            NodeIndex::Entity(Uid(id)) => ViewBuilder {
                 id,
                 geometries: Vec::new(),
             },

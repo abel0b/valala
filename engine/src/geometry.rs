@@ -2,8 +2,7 @@ use crate::{
     mesh::{Mesh, Normal, PrimitiveType, Vertex},
     resource::{ModelId, ShaderId, TextureId},
 };
-use cgmath::num_traits::identities::One;
-use cgmath::{Matrix4, Rad, Vector3};
+use nalgebra::{Matrix4, Unit, Vector3};
 
 pub enum Shape {
     Model(ModelId),
@@ -23,7 +22,7 @@ impl Geometry {
             shader_id: ShaderId("model"),
             texture_id: TextureId("default"),
             shape: Shape::Model(model_id),
-            transform: Matrix4::one(),
+            transform: Matrix4::identity(),
         }
     }
     pub fn with_model_and_texture(model_id: ModelId, texture_id: TextureId) -> Geometry {
@@ -31,7 +30,7 @@ impl Geometry {
             shader_id: ShaderId("model"),
             texture_id,
             shape: Shape::Model(model_id),
-            transform: Matrix4::one(),
+            transform: Matrix4::identity(),
         }
     }
 }
@@ -59,7 +58,7 @@ impl Default for GeometryBuilder {
             indices: Vec::new(),
             normals: None,
             primitive: PrimitiveType::TrianglesList,
-            transform: Matrix4::one(),
+            transform: Matrix4::identity(),
         }
     }
 }
@@ -86,27 +85,30 @@ impl GeometryBuilder {
     }
 
     pub fn translate(&mut self, vector: Vector3<f32>) -> &mut GeometryBuilder {
-        self.transform = self.transform * Matrix4::from_translation(vector);
+        self.transform = self.transform * Matrix4::new_translation(&vector);
         self
     }
 
     pub fn scale(&mut self, value: f32) -> &mut GeometryBuilder {
-        self.transform = self.transform * Matrix4::from_scale(value);
+        self.transform = self.transform * Matrix4::new_scaling(value);
         self
     }
 
-    pub fn rotate_x<A: Into<Rad<f32>>>(&mut self, angle: A) -> &mut GeometryBuilder {
-        self.transform = self.transform * Matrix4::from_angle_x(angle);
+    pub fn rotate_x(&mut self, angle: f32) -> &mut GeometryBuilder {
+        self.transform = self.transform
+            * Matrix4::from_axis_angle(&Unit::new_normalize(Vector3::from([1.0, 0.0, 0.0])), angle);
         self
     }
 
-    pub fn rotate_y<A: Into<Rad<f32>>>(&mut self, angle: A) -> &mut GeometryBuilder {
-        self.transform = self.transform * Matrix4::from_angle_y(angle);
+    pub fn rotate_y(&mut self, angle: f32) -> &mut GeometryBuilder {
+        self.transform = self.transform
+            * Matrix4::from_axis_angle(&Unit::new_normalize(Vector3::from([0.0, 1.0, 0.0])), angle);
         self
     }
 
-    pub fn rotate_z<A: Into<Rad<f32>>>(&mut self, angle: A) -> &mut GeometryBuilder {
-        self.transform = self.transform * Matrix4::from_angle_z(angle);
+    pub fn rotate_z(&mut self, angle: f32) -> &mut GeometryBuilder {
+        self.transform = self.transform
+            * Matrix4::from_axis_angle(&Unit::new_normalize(Vector3::from([0.0, 0.0, 1.0])), angle);
         self
     }
 

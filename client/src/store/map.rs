@@ -2,12 +2,12 @@ use crate::store::Tile;
 use crate::store::{TileKind, TileState};
 use pathfinding::prelude::astar;
 use std::collections::HashMap;
-use valala_engine::scene::NodeId;
+use valala_engine::scene::Uid;
 
 #[derive(Default)]
 pub struct Map {
     pub path: Vec<(i32, i32)>,
-    pub entity: Option<NodeId>,
+    pub entity: Option<Uid>,
     pub tiles: HashMap<(i32, i32), Tile>,
 }
 
@@ -68,25 +68,13 @@ impl Map {
         let result = astar(
             &origin,
             |p| self.successors(*p),
-            |p| hex_distance(*p, destination) / 3,
+            |p| hex_distance(*p, destination),
             |p| *p == destination,
         );
         match result {
             Some((path, _c)) => Some(path),
             None => None,
         }
-        // let mut path = Vec::new();
-        // let mut openSet = vec![origin];
-        // let mut cameFrom: HashMap<(i32,i32),(i32,i32)> = HashMap::new();
-        // let mut g_score: HashMap<(i32,i32), u32> = HashMap::new();
-        // g_score.insert(origin, 0);
-        // let mut f_score: HashMap<(i32,i32), u32> = HashMap::new();
-        // f_score.insert(origin, 0);
-        //
-        // match path.len() {
-        //     0 => None,
-        //     _ => Some(path),
-        // }
     }
 }
 

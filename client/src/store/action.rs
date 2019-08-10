@@ -1,10 +1,10 @@
-use valala_engine::scene::NodeId;
+use valala_engine::scene::Uid;
 
 pub enum Action {
     EnterLobby,
     LoadRandomMap,
-    MouseDownTile(NodeId),
-    HoverEnterTile(NodeId),
-    HoverLeaveTile(NodeId),
+    MouseDownTile(Uid),
+    HoverEnterTile(Uid),
+    HoverLeaveTile(Uid),
     Nop,
 }

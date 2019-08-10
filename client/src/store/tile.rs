@@ -1,5 +1,5 @@
 use core::f32::consts::PI;
-use valala_engine::scene::NodeId;
+use valala_engine::scene::Uid;
 
 #[derive(Eq, PartialEq, Copy, Clone)]
 pub enum TileKind {
@@ -16,7 +16,7 @@ pub enum TileState {
 
 pub struct Tile {
     pub kind: TileKind,
-    pub entity: NodeId,
+    pub entity: Uid,
     pub state: TileState,
     pub q: i32,
     pub r: i32,
@@ -31,7 +31,7 @@ impl Tile {
     pub const CONVMAT: [[f32; 2]; 2] = [[3.0 / 2.0, 0.0], [1.732_050_8 / 2.0, 1.732_050_8]];
     pub const SIZE: (f32, f32) = (1.0, 1.0);
 
-    pub fn new(entity: NodeId, q: i32, r: i32, kind: TileKind) -> Tile {
+    pub fn new(entity: Uid, q: i32, r: i32, kind: TileKind) -> Tile {
         let center = Self::center(q, r);
         let y = 0;
         let height = match kind {

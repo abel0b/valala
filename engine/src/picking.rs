@@ -1,15 +1,15 @@
-use crate::scene::NodeId;
+use crate::scene::Uid;
 use glium::Surface;
 
 pub enum PickingEvent {
-    MouseUp(NodeId),
-    MouseDown(NodeId),
-    HoverEnter(NodeId),
-    HoverLeave(NodeId),
+    MouseUp(Uid),
+    MouseDown(Uid),
+    HoverEnter(Uid),
+    HoverLeave(Uid),
 }
 
 pub struct Picker {
-    pub entity: Option<NodeId>,
+    pub entity: Option<Uid>,
     picking_attachments: Option<(
         glium::texture::UnsignedTexture2d,
         glium::framebuffer::DepthRenderBuffer,
@@ -89,17 +89,17 @@ impl Picker {
                 None
             }
             id => {
-                let node_id = NodeId::Entity(id);
+                let uid = Uid(id);
                 if let Some(previous_id) = self.entity {
-                    if previous_id != node_id {
+                    if previous_id != uid {
                         events.push(PickingEvent::HoverLeave(previous_id));
-                        events.push(PickingEvent::HoverEnter(node_id));
+                        events.push(PickingEvent::HoverEnter(uid));
                     }
                 } else {
-                    events.push(PickingEvent::HoverEnter(node_id));
+                    events.push(PickingEvent::HoverEnter(uid));
                 }
 
-                Some(node_id)
+                Some(uid)
             }
         };
         events
