@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 glium = "0.25.0"
-image = "0.21.2"
+image = "0.23.5"
 cgmath = "0.17.0"
 tobj = "0.1.7"
 serde = { version = "1.0.94", features = ["derive"] }
